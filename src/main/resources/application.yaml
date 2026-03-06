@@ -1,3 +1,16 @@
 spring:
   application:
     name: vault-ledger
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/vault_ledger
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+server:
+  port: 8081
