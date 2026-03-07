@@ -22,8 +22,9 @@ public class Transaction {
     @Column(updatable = false)
     private Long id;
 
-    @Column(name = "account_id", nullable = false, updatable = false)
-    private Long accountId;
+    @ManyToOne
+    @JoinColumn(name = "account_id", nullable = false, updatable = false)
+    private Account account;
 
     @Column(name = "transaction_type", nullable = false, updatable = false)
     private String type;

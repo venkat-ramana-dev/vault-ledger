@@ -8,7 +8,7 @@ public class TransactionMapper {
     public static Transaction mapToTransaction(TransactionDto transactionDto) {
         return Transaction.builder()
                 .id(transactionDto.id())
-                .accountId(transactionDto.accountId())
+                .account(transactionDto.account())
                 .type(transactionDto.type())
                 .amount(transactionDto.amount())
                 .createdAt(transactionDto.createdAt())
@@ -18,7 +18,7 @@ public class TransactionMapper {
     public static TransactionDto mapToTransactionDto (Transaction transaction) {
         return TransactionDto.builder()
                 .id(transaction.getId())
-                .accountId(transaction.getAccountId())
+                .account(transaction.getAccount())
                 .type(transaction.getType())
                 .amount(transaction.getAmount())
                 .createdAt(transaction.getCreatedAt())
