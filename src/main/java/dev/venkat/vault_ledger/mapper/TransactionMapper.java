@@ -5,20 +5,20 @@ import dev.venkat.vault_ledger.entity.Transaction;
 
 public class TransactionMapper {
 
-    Transaction mapToTransaction(TransactionDto transactionDto) {
+    public static Transaction mapToTransaction(TransactionDto transactionDto) {
         return Transaction.builder()
                 .id(transactionDto.id())
-                .accountId(transactionDto.accountId())
+                .account(transactionDto.account())
                 .type(transactionDto.type())
                 .amount(transactionDto.amount())
                 .createdAt(transactionDto.createdAt())
                 .build();
     }
 
-    TransactionDto mapToTransactionDto (Transaction transaction) {
+    public static TransactionDto mapToTransactionDto (Transaction transaction) {
         return TransactionDto.builder()
                 .id(transaction.getId())
-                .accountId(transaction.getAccountId())
+                .account(transaction.getAccount())
                 .type(transaction.getType())
                 .amount(transaction.getAmount())
                 .createdAt(transaction.getCreatedAt())

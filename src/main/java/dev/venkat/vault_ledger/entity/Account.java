@@ -3,6 +3,8 @@ package dev.venkat.vault_ledger.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
+
 @Entity
 @Table(name = "accounts")
 
@@ -18,7 +20,10 @@ public class Account {
     @Column(updatable = false)
     private Long id;
 
-    @Column(name = "account_holder_name", nullable = false, updatable = false)
+    @Column(name = "account_holder_name", nullable = false)
     private String accountHolderName;
+
+    @Column(nullable = false)
+    private BigDecimal balance;
 
 }
