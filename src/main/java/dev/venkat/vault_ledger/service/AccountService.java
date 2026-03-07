@@ -6,13 +6,14 @@ import dev.venkat.vault_ledger.mapper.AccountMapper;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.service.impl.AccountServiceImpl;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 @Service
-@AllArgsConstructor
+@RequiredArgsConstructor
 public class AccountService implements AccountServiceImpl {
 
-    private AccountRepository accountRepository;
+    private final AccountRepository accountRepository;
 
     @Override
     public AccountDto createAccount(Account account) {
