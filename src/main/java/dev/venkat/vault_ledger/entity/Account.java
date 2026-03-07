@@ -23,7 +23,7 @@ public class Account {
     @Column(name = "account_holder_name", nullable = false)
     private String accountHolderName;
 
-    @Column(nullable = false, updatable = false)
+    @Column(nullable = false)
     private BigDecimal balance;
 
 }
