@@ -9,6 +9,7 @@ public class AccountMapper {
         return AccountDto.builder()
                 .id(account.getId())
                 .accountHolderName(account.getAccountHolderName())
+                .balance(account.getBalance())
                 .build();
     }
 
@@ -16,6 +17,7 @@ public class AccountMapper {
         return Account.builder()
                 .id(accountDto.id())
                 .accountHolderName(accountDto.accountHolderName())
+                .balance(accountDto.balance())
                 .build();
     }
 
