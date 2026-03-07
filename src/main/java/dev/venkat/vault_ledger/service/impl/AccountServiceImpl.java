@@ -7,4 +7,6 @@ public interface AccountServiceImpl {
 
     AccountDto createAccount(Account account);
 
+    Account getAccountEntityById(Long id);
+
 }
