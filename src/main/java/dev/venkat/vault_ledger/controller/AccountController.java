@@ -6,10 +6,7 @@ import dev.venkat.vault_ledger.mapper.AccountMapper;
 import dev.venkat.vault_ledger.service.AccountService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/account")
@@ -23,5 +20,11 @@ public class AccountController {
         Account account = AccountMapper.mapToAccount(accountDto);
         AccountDto savedAccountDto = accountService.createAccount(account);
         return ResponseEntity.ok(savedAccountDto);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<AccountDto> getAccountById(@PathVariable Long id) {
+        Account account = accountService.getAccountById(id);
+        return ResponseEntity.ok(AccountMapper.mapToAccountDto(account));
     }
 }

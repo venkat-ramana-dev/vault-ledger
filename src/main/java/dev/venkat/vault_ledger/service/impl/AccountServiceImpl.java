@@ -9,4 +9,6 @@ public interface AccountServiceImpl {
 
     Account getAccountEntityById(Long id);
 
+    Account getAccountById(Long id);
+
 }
