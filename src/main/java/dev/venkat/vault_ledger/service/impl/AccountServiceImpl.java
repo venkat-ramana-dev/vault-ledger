@@ -13,6 +13,6 @@ public interface AccountServiceImpl {
 
     Account getAccountById(Long id);
 
-    List<Account> getAccounts();
+    List<Account> getAllAccounts();
 
 }

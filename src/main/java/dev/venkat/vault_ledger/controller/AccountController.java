@@ -31,8 +31,8 @@ public class AccountController {
     }
 
     @GetMapping("/accounts")
-    public ResponseEntity<List<AccountDto>> getAccounts() {
-        List<Account> accounts = accountService.getAccounts();
+    public ResponseEntity<List<AccountDto>> getAllAccounts() {
+        List<Account> accounts = accountService.getAllAccounts();
         List<AccountDto> accountDtos = accounts.stream()
                 .map(account -> AccountMapper.mapToAccountDto(account))
                 .toList();

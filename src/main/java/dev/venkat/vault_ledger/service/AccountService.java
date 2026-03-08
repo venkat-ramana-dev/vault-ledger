@@ -47,7 +47,7 @@ public class AccountService implements AccountServiceImpl {
     }
 
     @Override
-    public List<Account> getAccounts() {
+    public List<Account> getAllAccounts() {
 
         List<Account> accounts = new ArrayList<>();
 
