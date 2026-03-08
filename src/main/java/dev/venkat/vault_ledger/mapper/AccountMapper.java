@@ -10,6 +10,7 @@ public class AccountMapper {
                 .id(account.getId())
                 .accountHolderName(account.getAccountHolderName())
                 .balance(account.getBalance())
+                .accountStatus(account.getAccountStatus())
                 .build();
     }
 
@@ -18,6 +19,7 @@ public class AccountMapper {
                 .id(accountDto.id())
                 .accountHolderName(accountDto.accountHolderName())
                 .balance(accountDto.balance())
+                .accountStatus(accountDto.accountStatus())
                 .build();
     }
 

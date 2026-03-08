@@ -15,4 +15,6 @@ public interface AccountServiceImpl {
 
     List<AccountDto> getAllAccounts();
 
+    String deleteAccountById(Long id);
+
 }
