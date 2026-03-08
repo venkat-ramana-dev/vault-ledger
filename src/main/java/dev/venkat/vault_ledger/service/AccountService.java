@@ -23,7 +23,8 @@ public class AccountService implements AccountServiceImpl {
     private final TransactionRepository transactionRepository;
 
     @Override
-    public AccountDto createAccount(Account account) {
+    public AccountDto createAccount(AccountDto accountDto) {
+        Account account = AccountMapper.mapToAccount(accountDto);
         Account savedAccount =  accountRepository.save(account);
 
         Transaction transaction = Transaction.builder()
@@ -38,22 +39,25 @@ public class AccountService implements AccountServiceImpl {
     }
 
     @Override
-    public Account getAccountById(Long id) {
+    public AccountDto getAccountById(Long id) {
 
         Account account = accountRepository.findById(id)
                 .orElseThrow(() ->new RuntimeException("Account not found with id :" + id));
 
-        return account;
+        AccountDto accountDto = AccountMapper.mapToAccountDto(account);
+        return accountDto;
     }
 
     @Override
-    public List<Account> getAllAccounts() {
+    public List<AccountDto> getAllAccounts() {
 
-        List<Account> accounts = new ArrayList<>();
+        List<AccountDto> accountDtos = new ArrayList<>();
 
-        accounts = accountRepository.findAll().stream().toList();
+        accountDtos = accountRepository.findAll().stream()
+                .map(account -> AccountMapper.mapToAccountDto(account))
+                .toList();
 
-        return accounts;
+        return accountDtos;
     }
 
     @Override

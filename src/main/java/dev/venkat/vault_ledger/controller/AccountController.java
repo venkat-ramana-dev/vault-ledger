@@ -19,23 +19,19 @@ public class AccountController {
 
     @PostMapping("/create")
     public ResponseEntity<AccountDto> createAccount(@RequestBody AccountDto accountDto) {
-        Account account = AccountMapper.mapToAccount(accountDto);
-        AccountDto savedAccountDto = accountService.createAccount(account);
+        AccountDto savedAccountDto = accountService.createAccount(accountDto);
         return ResponseEntity.ok(savedAccountDto);
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<AccountDto> getAccountById(@PathVariable Long id) {
-        Account account = accountService.getAccountById(id);
-        return ResponseEntity.ok(AccountMapper.mapToAccountDto(account));
+        AccountDto accountDto = accountService.getAccountById(id);
+        return ResponseEntity.ok(accountDto);
     }
 
     @GetMapping("/accounts")
     public ResponseEntity<List<AccountDto>> getAllAccounts() {
-        List<Account> accounts = accountService.getAllAccounts();
-        List<AccountDto> accountDtos = accounts.stream()
-                .map(account -> AccountMapper.mapToAccountDto(account))
-                .toList();
+        List<AccountDto> accountDtos = accountService.getAllAccounts();
 
         return ResponseEntity.ok(accountDtos);
     }
