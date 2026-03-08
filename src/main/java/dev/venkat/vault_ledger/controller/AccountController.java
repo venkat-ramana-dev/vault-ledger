@@ -8,6 +8,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/account")
 @RequiredArgsConstructor
@@ -26,5 +28,15 @@ public class AccountController {
     public ResponseEntity<AccountDto> getAccountById(@PathVariable Long id) {
         Account account = accountService.getAccountById(id);
         return ResponseEntity.ok(AccountMapper.mapToAccountDto(account));
+    }
+
+    @GetMapping("/accounts")
+    public ResponseEntity<List<AccountDto>> getAccounts() {
+        List<Account> accounts = accountService.getAccounts();
+        List<AccountDto> accountDtos = accounts.stream()
+                .map(account -> AccountMapper.mapToAccountDto(account))
+                .toList();
+
+        return ResponseEntity.ok(accountDtos);
     }
 }

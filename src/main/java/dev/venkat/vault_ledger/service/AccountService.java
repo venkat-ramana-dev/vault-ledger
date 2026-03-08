@@ -10,6 +10,9 @@ import dev.venkat.vault_ledger.service.impl.AccountServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @Service
 @RequiredArgsConstructor
 public class AccountService implements AccountServiceImpl {
@@ -41,6 +44,16 @@ public class AccountService implements AccountServiceImpl {
                 .orElseThrow(() ->new RuntimeException("Account not found with id :" + id));
 
         return account;
+    }
+
+    @Override
+    public List<Account> getAccounts() {
+
+        List<Account> accounts = new ArrayList<>();
+
+        accounts = accountRepository.findAll().stream().toList();
+
+        return accounts;
     }
 
     @Override
