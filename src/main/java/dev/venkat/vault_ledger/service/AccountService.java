@@ -3,6 +3,7 @@ package dev.venkat.vault_ledger.service;
 import dev.venkat.vault_ledger.dto.AccountDto;
 import dev.venkat.vault_ledger.entity.Account;
 import dev.venkat.vault_ledger.entity.Transaction;
+import dev.venkat.vault_ledger.enums.AccountStatus;
 import dev.venkat.vault_ledger.mapper.AccountMapper;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionRepository;
@@ -25,6 +26,7 @@ public class AccountService implements AccountServiceImpl {
     @Override
     public AccountDto createAccount(AccountDto accountDto) {
         Account account = AccountMapper.mapToAccount(accountDto);
+        account.setAccountStatus(AccountStatus.ACTIVE);
         Account savedAccount =  accountRepository.save(account);
 
         Transaction transaction = Transaction.builder()
