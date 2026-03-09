@@ -66,8 +66,9 @@ public class AccountService implements AccountServiceImpl {
     public String deleteAccountById(Long id) {
 
         Account account = getAccountEntityById(id);
-        accountRepository.delete(account);
-        return "Account deleted successfully with id" + id;
+        account.setAccountStatus(AccountStatus.CLOSED);
+        accountRepository.save(account);
+        return "Account deleted successfully with id " + id;
     }
 
     @Override
