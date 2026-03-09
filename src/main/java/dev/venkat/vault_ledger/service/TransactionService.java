@@ -34,20 +34,25 @@ public class TransactionService implements TransactionServiceImpl{
 
         Account account = accountService.getAccountEntityById(id);
 
-        BigDecimal amount = amountDto.amount();
+        if (account.getAccountStatus().equals(AccountStatus.ACTIVE)) {
+            BigDecimal amount = amountDto.amount();
 
-        BigDecimal newBalance = account.getBalance().add(amount);
-        account.setBalance(newBalance);
+            BigDecimal newBalance = account.getBalance().add(amount);
+            account.setBalance(newBalance);
 
-        Transaction transaction = Transaction.builder()
-                .account(account)
-                .type("DEPOSIT")
-                .amount(amount)
-                .build();
+            Transaction transaction = Transaction.builder()
+                    .account(account)
+                    .type("DEPOSIT")
+                    .amount(amount)
+                    .build();
 
-        Transaction savedTransaction = transactionRepository.save(transaction);
+            Transaction savedTransaction = transactionRepository.save(transaction);
 
-        return TransactionMapper.mapToTransactionDto(savedTransaction);
+            return TransactionMapper.mapToTransactionDto(savedTransaction);
+        } else {
+            throw new AccountClosedException("Account is Closed with id " + id);
+        }
+
 
     }
 
