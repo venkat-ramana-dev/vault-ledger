@@ -1,8 +1,13 @@
 package dev.venkat.vault_ledger.service;
 
 import dev.venkat.vault_ledger.dto.AmountDto;
+import dev.venkat.vault_ledger.dto.TransactionDto;
 import dev.venkat.vault_ledger.entity.Account;
 import dev.venkat.vault_ledger.entity.Transaction;
+import dev.venkat.vault_ledger.enums.AccountStatus;
+import dev.venkat.vault_ledger.exception.AccountClosedException;
+import dev.venkat.vault_ledger.exception.InsufficientBalanceException;
+import dev.venkat.vault_ledger.mapper.TransactionMapper;
 import dev.venkat.vault_ledger.repository.TransactionRepository;
 import dev.venkat.vault_ledger.service.impl.TransactionServiceImpl;
 import jakarta.transaction.Transactional;
@@ -20,7 +25,7 @@ public class TransactionService implements TransactionServiceImpl{
 
     @Override
     @Transactional
-    public Transaction deposit(Long id, AmountDto amountDto) {
+    public TransactionDto deposit(Long id, AmountDto amountDto) {
 
         Account account = accountService.getAccountEntityById(id);
 
@@ -37,7 +42,32 @@ public class TransactionService implements TransactionServiceImpl{
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
-        return savedTransaction;
+        return TransactionMapper.mapToTransactionDto(savedTransaction);
 
+    }
+
+    @Transactional
+    @Override
+    public TransactionDto withdraw(Long id, AmountDto amount) {
+
+        Account account = accountService.getAccountEntityById(id);
+
+        if (account.getBalance().compareTo(amount.amount()) >= 0 && account.getAccountStatus().equals(AccountStatus.ACTIVE)) {
+            account.setBalance(account.getBalance().subtract(amount.amount()));
+
+            Transaction transaction = Transaction.builder()
+                    .account(account)
+                    .type("WITHDRAWL")
+                    .amount(amount.amount())
+                    .build();
+
+            transactionRepository.save(transaction);
+
+            return TransactionMapper.mapToTransactionDto(transaction);
+        } else if (!account.getAccountStatus().equals(AccountStatus.ACTIVE)) {
+            throw new AccountClosedException("Account is closed");
+        } else {
+            throw new InsufficientBalanceException("Insufficient balance. Cannot withdraw " + amount.amount());
+        }
     }
 }
