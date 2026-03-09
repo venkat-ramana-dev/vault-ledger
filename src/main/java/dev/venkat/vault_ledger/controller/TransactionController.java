@@ -26,8 +26,8 @@ public class TransactionController {
                                                   @RequestBody AmountDto amount) {
 
 
-        Transaction transaction = transactionService.deposit(id, amount);
+        TransactionDto transactionDto = transactionService.deposit(id, amount);
 
-        return ResponseEntity.ok(TransactionMapper.mapToTransactionDto(transaction));
+        return ResponseEntity.ok(transactionDto);
     }
 }

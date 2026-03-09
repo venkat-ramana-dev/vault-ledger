@@ -1,8 +1,10 @@
 package dev.venkat.vault_ledger.service;
 
 import dev.venkat.vault_ledger.dto.AmountDto;
+import dev.venkat.vault_ledger.dto.TransactionDto;
 import dev.venkat.vault_ledger.entity.Account;
 import dev.venkat.vault_ledger.entity.Transaction;
+import dev.venkat.vault_ledger.mapper.TransactionMapper;
 import dev.venkat.vault_ledger.repository.TransactionRepository;
 import dev.venkat.vault_ledger.service.impl.TransactionServiceImpl;
 import jakarta.transaction.Transactional;
@@ -20,7 +22,7 @@ public class TransactionService implements TransactionServiceImpl{
 
     @Override
     @Transactional
-    public Transaction deposit(Long id, AmountDto amountDto) {
+    public TransactionDto deposit(Long id, AmountDto amountDto) {
 
         Account account = accountService.getAccountEntityById(id);
 
@@ -37,7 +39,7 @@ public class TransactionService implements TransactionServiceImpl{
 
         Transaction savedTransaction = transactionRepository.save(transaction);
 
-        return savedTransaction;
+        return TransactionMapper.mapToTransactionDto(savedTransaction);
 
     }
 }
