@@ -7,4 +7,6 @@ public interface TransactionServiceImpl {
 
     TransactionDto deposit(Long id, AmountDto amount);
 
+    TransactionDto withdraw(Long id, AmountDto amount);
+
 }
