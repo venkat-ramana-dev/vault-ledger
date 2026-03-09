@@ -6,6 +6,7 @@ import dev.venkat.vault_ledger.dto.TransferDto;
 import dev.venkat.vault_ledger.entity.Account;
 import dev.venkat.vault_ledger.entity.Transaction;
 import dev.venkat.vault_ledger.enums.AccountStatus;
+import dev.venkat.vault_ledger.enums.TransactionType;
 import dev.venkat.vault_ledger.exception.AccountClosedException;
 import dev.venkat.vault_ledger.exception.InsufficientBalanceException;
 import dev.venkat.vault_ledger.mapper.TransactionMapper;
@@ -42,7 +43,7 @@ public class TransactionService implements TransactionServiceImpl{
 
             Transaction transaction = Transaction.builder()
                     .account(account)
-                    .type("DEPOSIT")
+                    .transactionType(TransactionType.DEPOSIT)
                     .amount(amount)
                     .build();
 
@@ -67,7 +68,7 @@ public class TransactionService implements TransactionServiceImpl{
 
             Transaction transaction = Transaction.builder()
                     .account(account)
-                    .type("WITHDRAWL")
+                    .transactionType(TransactionType.WITHDRAWAl)
                     .amount(amount.amount())
                     .build();
 
