@@ -1,5 +1,6 @@
 package dev.venkat.vault_ledger.entity;
 
+import dev.venkat.vault_ledger.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
@@ -26,8 +27,9 @@ public class Transaction {
     @JoinColumn(name = "account_id", nullable = false, updatable = false)
     private Account account;
 
+    @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type", nullable = false, updatable = false)
-    private String type;
+    private TransactionType transactionType = TransactionType.INITIAL_DEPOSIT;
 
     @Column(nullable = false, precision = 19, scale = 4, updatable = false)
     private BigDecimal amount;

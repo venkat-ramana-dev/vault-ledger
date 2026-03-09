@@ -6,6 +6,7 @@ import dev.venkat.vault_ledger.dto.TransferDto;
 import dev.venkat.vault_ledger.entity.Account;
 import dev.venkat.vault_ledger.entity.Transaction;
 import dev.venkat.vault_ledger.enums.AccountStatus;
+import dev.venkat.vault_ledger.enums.TransactionType;
 import dev.venkat.vault_ledger.exception.AccountClosedException;
 import dev.venkat.vault_ledger.exception.InsufficientBalanceException;
 import dev.venkat.vault_ledger.mapper.TransactionMapper;
@@ -34,20 +35,25 @@ public class TransactionService implements TransactionServiceImpl{
 
         Account account = accountService.getAccountEntityById(id);
 
-        BigDecimal amount = amountDto.amount();
+        if (account.getAccountStatus().equals(AccountStatus.ACTIVE)) {
+            BigDecimal amount = amountDto.amount();
 
-        BigDecimal newBalance = account.getBalance().add(amount);
-        account.setBalance(newBalance);
+            BigDecimal newBalance = account.getBalance().add(amount);
+            account.setBalance(newBalance);
 
-        Transaction transaction = Transaction.builder()
-                .account(account)
-                .type("DEPOSIT")
-                .amount(amount)
-                .build();
+            Transaction transaction = Transaction.builder()
+                    .account(account)
+                    .transactionType(TransactionType.DEPOSIT)
+                    .amount(amount)
+                    .build();
 
-        Transaction savedTransaction = transactionRepository.save(transaction);
+            Transaction savedTransaction = transactionRepository.save(transaction);
 
-        return TransactionMapper.mapToTransactionDto(savedTransaction);
+            return TransactionMapper.mapToTransactionDto(savedTransaction);
+        } else {
+            throw new AccountClosedException("Account is Closed with id " + id);
+        }
+
 
     }
 
@@ -62,7 +68,7 @@ public class TransactionService implements TransactionServiceImpl{
 
             Transaction transaction = Transaction.builder()
                     .account(account)
-                    .type("WITHDRAWL")
+                    .transactionType(TransactionType.WITHDRAWAl)
                     .amount(amount.amount())
                     .build();
 

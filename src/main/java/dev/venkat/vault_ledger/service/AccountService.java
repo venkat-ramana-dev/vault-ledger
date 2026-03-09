@@ -4,6 +4,8 @@ import dev.venkat.vault_ledger.dto.AccountDto;
 import dev.venkat.vault_ledger.entity.Account;
 import dev.venkat.vault_ledger.entity.Transaction;
 import dev.venkat.vault_ledger.enums.AccountStatus;
+import dev.venkat.vault_ledger.enums.TransactionType;
+import dev.venkat.vault_ledger.exception.AccountNotFoundException;
 import dev.venkat.vault_ledger.mapper.AccountMapper;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionRepository;
@@ -31,7 +33,7 @@ public class AccountService implements AccountServiceImpl {
 
         Transaction transaction = Transaction.builder()
                 .account(savedAccount)
-                .type("INITIAL_DEPOSIT")
+                .transactionType(TransactionType.INITIAL_DEPOSIT)
                 .amount(account.getBalance())
                 .build();
 
@@ -44,7 +46,7 @@ public class AccountService implements AccountServiceImpl {
     public AccountDto getAccountById(Long id) {
 
         Account account = accountRepository.findById(id)
-                .orElseThrow(() ->new RuntimeException("Account not found with id :" + id));
+                .orElseThrow(() -> new AccountNotFoundException("Account not found with id :" + id));
 
         AccountDto accountDto = AccountMapper.mapToAccountDto(account);
         return accountDto;
