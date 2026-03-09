@@ -2,6 +2,7 @@ package dev.venkat.vault_ledger.service;
 
 import dev.venkat.vault_ledger.dto.AmountDto;
 import dev.venkat.vault_ledger.dto.TransactionDto;
+import dev.venkat.vault_ledger.dto.TransferDto;
 import dev.venkat.vault_ledger.entity.Account;
 import dev.venkat.vault_ledger.entity.Transaction;
 import dev.venkat.vault_ledger.enums.AccountStatus;
@@ -15,6 +16,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -46,8 +51,8 @@ public class TransactionService implements TransactionServiceImpl{
 
     }
 
-    @Transactional
     @Override
+    @Transactional
     public TransactionDto withdraw(Long id, AmountDto amount) {
 
         Account account = accountService.getAccountEntityById(id);
@@ -69,5 +74,33 @@ public class TransactionService implements TransactionServiceImpl{
         } else {
             throw new InsufficientBalanceException("Insufficient balance. Cannot withdraw " + amount.amount());
         }
+    }
+
+    @Override
+    @Transactional
+    public List<TransactionDto> transfer(Long fromId, TransferDto transferDto) {
+
+        List<TransactionDto> transactionDtos = new ArrayList<>();
+
+        Long toId = transferDto.toId();
+        AmountDto amount = new AmountDto(transferDto.amount());
+
+        TransactionDto fromTransactionDto = withdraw(fromId, amount);
+        TransactionDto toTransactionDto = deposit(toId, amount);
+
+        transactionDtos.add(fromTransactionDto);
+        transactionDtos.add(toTransactionDto);
+
+        return transactionDtos;
+    }
+
+    @Override
+    public List<TransactionDto> getTransactionHistory(Long id) {
+
+        List<Transaction> transactions = transactionRepository.findByAccountId(id);
+
+        return transactions.stream()
+                .map(TransactionMapper::mapToTransactionDto)
+                .collect(Collectors.toList());
     }
 }
