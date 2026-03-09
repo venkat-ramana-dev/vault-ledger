@@ -1,5 +1,6 @@
 package dev.venkat.vault_ledger.entity;
 
+import dev.venkat.vault_ledger.enums.AccountStatus;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,5 +26,9 @@ public class Account {
 
     @Column(nullable = false)
     private BigDecimal balance;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private AccountStatus accountStatus = AccountStatus.ACTIVE;
 
 }

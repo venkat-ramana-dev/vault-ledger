@@ -19,6 +19,7 @@ public class AccountController {
 
     @PostMapping("/create")
     public ResponseEntity<AccountDto> createAccount(@RequestBody AccountDto accountDto) {
+
         AccountDto savedAccountDto = accountService.createAccount(accountDto);
         return ResponseEntity.ok(savedAccountDto);
     }
@@ -34,5 +35,10 @@ public class AccountController {
         List<AccountDto> accountDtos = accountService.getAllAccounts();
 
         return ResponseEntity.ok(accountDtos);
+    }
+
+    @DeleteMapping("/{id}/delete")
+    public String deleteAccountById(@PathVariable Long id) {
+        return accountService.deleteAccountById(id);
     }
 }
