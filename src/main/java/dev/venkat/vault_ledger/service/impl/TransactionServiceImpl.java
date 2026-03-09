@@ -14,4 +14,6 @@ public interface TransactionServiceImpl {
 
     List<TransactionDto> transfer(Long fromId, TransferDto transferDto);
 
+    List<TransactionDto> getTransactionHistory(Long id);
+
 }

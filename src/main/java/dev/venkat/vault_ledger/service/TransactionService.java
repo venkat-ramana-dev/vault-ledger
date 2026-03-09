@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -90,5 +92,15 @@ public class TransactionService implements TransactionServiceImpl{
         transactionDtos.add(toTransactionDto);
 
         return transactionDtos;
+    }
+
+    @Override
+    public List<TransactionDto> getTransactionHistory(Long id) {
+
+        List<Transaction> transactions = transactionRepository.findByAccountId(id);
+
+        return transactions.stream()
+                .map(TransactionMapper::mapToTransactionDto)
+                .collect(Collectors.toList());
     }
 }
