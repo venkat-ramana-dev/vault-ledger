@@ -20,7 +20,6 @@ public class TransactionController {
 
     private final TransactionService transactionService;
 
-    @Transactional
     @PutMapping("/account/{id}/deposit")
     public ResponseEntity<TransactionDto> deposit(@PathVariable("id") Long id,
                                                   @RequestBody AmountDto amount) {
@@ -29,7 +28,6 @@ public class TransactionController {
         return ResponseEntity.ok(transactionDto);
     }
 
-    @Transactional
     @PutMapping("/account/{id}/withdraw")
     public ResponseEntity<TransactionDto> withdraw(@PathVariable Long id,
                                                    @RequestBody AmountDto amount) {
