@@ -2,16 +2,13 @@ package dev.venkat.vault_ledger.controller;
 
 import dev.venkat.vault_ledger.dto.AmountDto;
 import dev.venkat.vault_ledger.dto.TransactionDto;
-import dev.venkat.vault_ledger.entity.Account;
-import dev.venkat.vault_ledger.entity.Transaction;
-import dev.venkat.vault_ledger.mapper.TransactionMapper;
+import dev.venkat.vault_ledger.dto.TransferDto;
 import dev.venkat.vault_ledger.service.TransactionService;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.math.BigDecimal;
+import java.util.List;
 
 @RestController
 @RequestMapping
@@ -33,6 +30,13 @@ public class TransactionController {
                                                    @RequestBody AmountDto amount) {
         TransactionDto transactionDto = transactionService.withdraw(id, amount);
         return ResponseEntity.ok(transactionDto);
+    }
+
+    @PutMapping("/account/{id}/transfer")
+    public ResponseEntity<List<TransactionDto>> transfer(@PathVariable("id") Long fromId,
+                                                         @RequestBody TransferDto transferDto) {
+        List<TransactionDto> transactionDtos = transactionService.transfer(fromId, transferDto);
+        return ResponseEntity.ok(transactionDtos);
     }
 
 
