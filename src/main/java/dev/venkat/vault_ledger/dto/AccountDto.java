@@ -7,6 +7,6 @@ import java.math.BigDecimal;
 
 @Builder
 public record AccountDto(Long id,
+                         String accountNumber,
                          String accountHolderName,
-                         BigDecimal balance,
                          AccountStatus accountStatus) { }

@@ -23,7 +23,7 @@ public class Account {
     @Column(name = "account_id", updatable = false)
     private Long id;
 
-    @Column(name = "account_number", updatable = false, nullable = false)
+    @Column(name = "account_number", unique = true, updatable = false, nullable = false)
     private String accountNumber;
 
     @Column(name = "account_holder_name", nullable = false)
