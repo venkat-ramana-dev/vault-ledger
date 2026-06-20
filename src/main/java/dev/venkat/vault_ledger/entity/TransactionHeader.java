@@ -19,12 +19,12 @@ public class TransactionHeader {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(updatable = false)
+    @Column(name = "header_id", updatable = false)
     private Long id;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type", nullable = false, updatable = false)
-    private TransactionType transactionType = TransactionType.INITIAL_DEPOSIT;
+    private TransactionType transactionType;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
