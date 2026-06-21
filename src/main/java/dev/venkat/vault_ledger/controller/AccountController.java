@@ -1,6 +1,7 @@
 package dev.venkat.vault_ledger.controller;
 
 import dev.venkat.vault_ledger.dto.AccountDto;
+import dev.venkat.vault_ledger.dto.CreateAccountRequestDto;
 import dev.venkat.vault_ledger.entity.Account;
 import dev.venkat.vault_ledger.mapper.AccountMapper;
 import dev.venkat.vault_ledger.service.AccountService;
@@ -18,9 +19,9 @@ public class AccountController {
     private final AccountService accountService;
 
     @PostMapping("/create")
-    public ResponseEntity<AccountDto> createAccount(@RequestBody AccountDto accountDto) {
+    public ResponseEntity<AccountDto> createAccount(@RequestBody CreateAccountRequestDto createAccountRequestDto) {
 
-        AccountDto savedAccountDto = accountService.createAccount(accountDto);
+        AccountDto savedAccountDto = accountService.createAccount(createAccountRequestDto);
         return ResponseEntity.ok(savedAccountDto);
     }
 

@@ -8,8 +8,8 @@ public class AccountMapper {
     public static AccountDto mapToAccountDto(Account account) {
         return AccountDto.builder()
                 .id(account.getId())
+                .accountNumber(account.getAccountNumber())
                 .accountHolderName(account.getAccountHolderName())
-                .balance(account.getBalance())
                 .accountStatus(account.getAccountStatus())
                 .build();
     }
@@ -17,8 +17,8 @@ public class AccountMapper {
     public static Account mapToAccount (AccountDto accountDto) {
         return Account.builder()
                 .id(accountDto.id())
+                .accountNumber(accountDto.accountNumber())
                 .accountHolderName(accountDto.accountHolderName())
-                .balance(accountDto.balance())
                 .accountStatus(accountDto.accountStatus())
                 .build();
     }
