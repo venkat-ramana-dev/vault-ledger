@@ -1,4 +1,47 @@
-//package dev.venkat.vault_ledger.service;
+package dev.venkat.vault_ledger.service;
+
+import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import java.math.BigDecimal;
+
+@Service
+@RequiredArgsConstructor
+public class TransactionService {
+
+    private final TransactionEntryRepository transactionEntryRepository;
+
+    public BigDecimal getAccountBalance(Long accountId) {
+        return transactionEntryRepository.calculateBalanceByAccountId(accountId);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 //
 //import dev.venkat.vault_ledger.dto.AmountDto;
 //import dev.venkat.vault_ledger.dto.TransactionDto;

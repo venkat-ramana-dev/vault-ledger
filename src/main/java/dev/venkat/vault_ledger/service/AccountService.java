@@ -34,6 +34,8 @@ public class AccountService implements AccountServiceImpl {
 
     private final TransactionEntryRepository transactionEntryRepository;
 
+    private final TransactionService transactionService;
+
     @Transactional
     @Override
     public AccountDto createAccount(CreateAccountRequestDto createAccountRequestDto) {
@@ -84,27 +86,28 @@ public class AccountService implements AccountServiceImpl {
         return AccountMapper.mapToAccountDto(savedAccount, startingBalance);
     }
 
-//    @Override
-//    public AccountDto getAccountById(Long id) {
-//
-//        Account account = accountRepository.findById(id)
-//                .orElseThrow(() -> new AccountNotFoundException("Account not found with id :" + id));
-//
-//        AccountDto accountDto = AccountMapper.mapToAccountDto(account);
-//        return accountDto;
-//    }
-//
-//    @Override
-//    public List<AccountDto> getAllAccounts() {
-//
-//        List<AccountDto> accountDtos = new ArrayList<>();
-//
-//        accountDtos = accountRepository.findAll().stream()
-//                .map(account -> AccountMapper.mapToAccountDto(account))
-//                .toList();
-//
-//        return accountDtos;
-//    }
+    @Transactional
+    @Override
+    public AccountDto getAccountDetails(String accountNumber) {
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+        BigDecimal currentBalance = transactionService.getAccountBalance(account.getId());
+        return AccountMapper.mapToAccountDto(account, currentBalance);
+    }
+
+    @Transactional
+    @Override
+    public List<AccountDto> getAllAccounts() {
+        List<Account> accounts = accountRepository.findAll();
+        List<AccountDto> accountDtos = new ArrayList<>();
+        for (Account account : accounts) {
+            BigDecimal balance = transactionService.getAccountBalance(account.getId());
+            AccountDto dto = AccountMapper.mapToAccountDto(account, balance);
+            accountDtos.add(dto);
+        }
+        return accountDtos;
+    }
+
 //
 //    @Override
 //    public String deleteAccountById(Long id) {

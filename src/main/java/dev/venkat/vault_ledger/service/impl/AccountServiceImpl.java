@@ -10,9 +10,9 @@ public interface AccountServiceImpl {
 
     AccountDto createAccount(CreateAccountRequestDto createAccountRequestDto);
 
-//    Account getAccountEntityById(Long id);
-//
-//    AccountDto getAccountById(Long id);
+    AccountDto getAccountDetails(String accountNumber);
+
+    List<AccountDto> getAllAccounts();
 //
 //    List<AccountDto> getAllAccounts();
 //
