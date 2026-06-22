@@ -9,7 +9,6 @@ public class AccountMapper {
 
     public static AccountDto mapToAccountDto(Account account, BigDecimal balance) {
         return AccountDto.builder()
-                .id(account.getId())
                 .accountNumber(account.getAccountNumber())
                 .accountHolderName(account.getAccountHolderName())
                 .accountStatus(account.getAccountStatus())
@@ -19,7 +18,6 @@ public class AccountMapper {
 
     public static Account mapToAccount (AccountDto accountDto) {
         return Account.builder()
-                .id(accountDto.id())
                 .accountNumber(accountDto.accountNumber())
                 .accountHolderName(accountDto.accountHolderName())
                 .accountStatus(accountDto.accountStatus())

@@ -6,8 +6,7 @@ import lombok.Builder;
 import java.math.BigDecimal;
 
 @Builder
-public record AccountDto(Long id,
-                         String accountNumber,
+public record AccountDto(String accountNumber,
                          String accountHolderName,
                          AccountStatus accountStatus,
                          BigDecimal balance) { }
