@@ -108,24 +108,15 @@ public class AccountService implements AccountServiceImpl {
         return accountDtos;
     }
 
-//
-//    @Override
-//    public String deleteAccountById(Long id) {
-//
-//        Account account = getAccountEntityById(id);
-//        account.setAccountStatus(AccountStatus.CLOSED);
-//        accountRepository.save(account);
-//        return "Account deleted successfully with id " + id;
-//    }
-//
-//    @Override
-//    public Account getAccountEntityById(Long id) {
-//
-//        Account account = accountRepository.findById(id)
-//                .orElseThrow(() ->new RuntimeException("Account not found with id :" + id));
-//
-//        return account;
-//    }
+    @Override
+    public String deleteAccount(String accountNumber) {
+
+        Account account = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+        account.setAccountStatus(AccountStatus.CLOSED);
+        accountRepository.save(account);
+        return "Account deleted successfully with Acc No : " + account.getAccountNumber();
+    }
 
     private String generateAccountNumber() {
 

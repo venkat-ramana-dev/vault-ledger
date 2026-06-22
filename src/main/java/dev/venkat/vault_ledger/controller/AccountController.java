@@ -37,9 +37,9 @@ public class AccountController {
         List<AccountDto> accountDtos = accountService.getAllAccounts();
         return ResponseEntity.ok(accountDtos);
     }
-//
-//    @DeleteMapping("/{id}/delete")
-//    public String deleteAccountById(@PathVariable Long id) {
-//        return accountService.deleteAccountById(id);
-//    }
+
+    @DeleteMapping("/{accountNumber}/delete")
+    public String deleteAccount(@PathVariable String accountNumber) {
+        return accountService.deleteAccount(accountNumber);
+    }
 }

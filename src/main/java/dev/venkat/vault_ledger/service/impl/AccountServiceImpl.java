@@ -13,9 +13,7 @@ public interface AccountServiceImpl {
     AccountDto getAccountDetails(String accountNumber);
 
     List<AccountDto> getAllAccounts();
-//
-//    List<AccountDto> getAllAccounts();
-//
-//    String deleteAccountById(Long id);
+
+    String deleteAccount(String accountNumber);
 
 }
