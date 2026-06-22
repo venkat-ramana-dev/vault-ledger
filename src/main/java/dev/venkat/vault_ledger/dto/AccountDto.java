@@ -9,4 +9,5 @@ import java.math.BigDecimal;
 public record AccountDto(Long id,
                          String accountNumber,
                          String accountHolderName,
-                         AccountStatus accountStatus) { }
+                         AccountStatus accountStatus,
+                         BigDecimal balance) { }

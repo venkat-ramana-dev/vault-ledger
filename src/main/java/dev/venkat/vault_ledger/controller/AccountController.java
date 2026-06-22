@@ -25,21 +25,21 @@ public class AccountController {
         return ResponseEntity.ok(savedAccountDto);
     }
 
-    @GetMapping("/{id}")
-    public ResponseEntity<AccountDto> getAccountById(@PathVariable Long id) {
-        AccountDto accountDto = accountService.getAccountById(id);
-        return ResponseEntity.ok(accountDto);
-    }
-
-    @GetMapping("/accounts")
-    public ResponseEntity<List<AccountDto>> getAllAccounts() {
-        List<AccountDto> accountDtos = accountService.getAllAccounts();
-
-        return ResponseEntity.ok(accountDtos);
-    }
-
-    @DeleteMapping("/{id}/delete")
-    public String deleteAccountById(@PathVariable Long id) {
-        return accountService.deleteAccountById(id);
-    }
+//    @GetMapping("/{id}")
+//    public ResponseEntity<AccountDto> getAccountById(@PathVariable Long id) {
+//        AccountDto accountDto = accountService.getAccountById(id);
+//        return ResponseEntity.ok(accountDto);
+//    }
+//
+//    @GetMapping("/accounts")
+//    public ResponseEntity<List<AccountDto>> getAllAccounts() {
+//        List<AccountDto> accountDtos = accountService.getAllAccounts();
+//
+//        return ResponseEntity.ok(accountDtos);
+//    }
+//
+//    @DeleteMapping("/{id}/delete")
+//    public String deleteAccountById(@PathVariable Long id) {
+//        return accountService.deleteAccountById(id);
+//    }
 }

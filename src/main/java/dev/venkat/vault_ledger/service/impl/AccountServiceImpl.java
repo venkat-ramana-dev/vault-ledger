@@ -10,12 +10,12 @@ public interface AccountServiceImpl {
 
     AccountDto createAccount(CreateAccountRequestDto createAccountRequestDto);
 
-    Account getAccountEntityById(Long id);
-
-    AccountDto getAccountById(Long id);
-
-    List<AccountDto> getAllAccounts();
-
-    String deleteAccountById(Long id);
+//    Account getAccountEntityById(Long id);
+//
+//    AccountDto getAccountById(Long id);
+//
+//    List<AccountDto> getAllAccounts();
+//
+//    String deleteAccountById(Long id);
 
 }

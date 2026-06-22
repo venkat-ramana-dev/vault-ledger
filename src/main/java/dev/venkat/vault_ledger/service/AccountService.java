@@ -4,7 +4,6 @@ import dev.venkat.vault_ledger.bootstrap.VaultInitializer;
 import dev.venkat.vault_ledger.dto.AccountDto;
 import dev.venkat.vault_ledger.dto.CreateAccountRequestDto;
 import dev.venkat.vault_ledger.entity.Account;
-import dev.venkat.vault_ledger.entity.Transaction;
 import dev.venkat.vault_ledger.entity.TransactionEntry;
 import dev.venkat.vault_ledger.entity.TransactionHeader;
 import dev.venkat.vault_ledger.enums.AccountStatus;
@@ -15,11 +14,10 @@ import dev.venkat.vault_ledger.mapper.AccountMapper;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
 import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
-import dev.venkat.vault_ledger.repository.TransactionRepository;
 import dev.venkat.vault_ledger.service.impl.AccountServiceImpl;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
@@ -52,7 +50,7 @@ public class AccountService implements AccountServiceImpl {
                 .accountStatus(AccountStatus.ACTIVE)
                 .build();
 
-        Account savedAccount =  accountRepository.save(account);
+        Account savedAccount = accountRepository.save(account);
 
         if (createAccountRequestDto.initialDeposit().compareTo(BigDecimal.ZERO) > 0) {
 
@@ -80,61 +78,58 @@ public class AccountService implements AccountServiceImpl {
                     .transactionHeader(savedTransactionHeader)
                     .build();
             transactionEntryRepository.save(vaultTransactionEntry);
-
-
         }
+        BigDecimal startingBalance = createAccountRequestDto.initialDeposit();
 
-        return AccountMapper.mapToAccountDto(savedAccount);
+        return AccountMapper.mapToAccountDto(savedAccount, startingBalance);
     }
 
-    @Override
-    public AccountDto getAccountById(Long id) {
-
-        Account account = accountRepository.findById(id)
-                .orElseThrow(() -> new AccountNotFoundException("Account not found with id :" + id));
-
-        AccountDto accountDto = AccountMapper.mapToAccountDto(account);
-        return accountDto;
-    }
-
-    @Override
-    public List<AccountDto> getAllAccounts() {
-
-        List<AccountDto> accountDtos = new ArrayList<>();
-
-        accountDtos = accountRepository.findAll().stream()
-                .map(account -> AccountMapper.mapToAccountDto(account))
-                .toList();
-
-        return accountDtos;
-    }
-
-    @Override
-    public String deleteAccountById(Long id) {
-
-        Account account = getAccountEntityById(id);
-        account.setAccountStatus(AccountStatus.CLOSED);
-        accountRepository.save(account);
-        return "Account deleted successfully with id " + id;
-    }
-
-    @Override
-    public Account getAccountEntityById(Long id) {
-
-        Account account = accountRepository.findById(id)
-                .orElseThrow(() ->new RuntimeException("Account not found with id :" + id));
-
-        return account;
-    }
+//    @Override
+//    public AccountDto getAccountById(Long id) {
+//
+//        Account account = accountRepository.findById(id)
+//                .orElseThrow(() -> new AccountNotFoundException("Account not found with id :" + id));
+//
+//        AccountDto accountDto = AccountMapper.mapToAccountDto(account);
+//        return accountDto;
+//    }
+//
+//    @Override
+//    public List<AccountDto> getAllAccounts() {
+//
+//        List<AccountDto> accountDtos = new ArrayList<>();
+//
+//        accountDtos = accountRepository.findAll().stream()
+//                .map(account -> AccountMapper.mapToAccountDto(account))
+//                .toList();
+//
+//        return accountDtos;
+//    }
+//
+//    @Override
+//    public String deleteAccountById(Long id) {
+//
+//        Account account = getAccountEntityById(id);
+//        account.setAccountStatus(AccountStatus.CLOSED);
+//        accountRepository.save(account);
+//        return "Account deleted successfully with id " + id;
+//    }
+//
+//    @Override
+//    public Account getAccountEntityById(Long id) {
+//
+//        Account account = accountRepository.findById(id)
+//                .orElseThrow(() ->new RuntimeException("Account not found with id :" + id));
+//
+//        return account;
+//    }
 
     private String generateAccountNumber() {
-        // 1. Get current time in milliseconds (e.g., 1718901234567)
+
         long timestamp = System.currentTimeMillis();
 
-        // 2. Get 4 random characters (e.g., A7B2)
         String randomSuffix = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
 
-        // 3. Combine them: ACC-1718901234567-A7B2
         return "ACC-" + timestamp + "-" + randomSuffix;
     }
 }

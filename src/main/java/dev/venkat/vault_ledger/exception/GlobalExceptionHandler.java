@@ -10,6 +10,8 @@ import java.time.LocalDateTime;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
+
+
     @ExceptionHandler(InsufficientBalanceException.class)
     public ResponseEntity<ErrorResponse> handleInsufficientBalance(
             InsufficientBalanceException ex, WebRequest request) {
@@ -51,18 +53,34 @@ public class GlobalExceptionHandler {
         );
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
-
+//
+//    @ExceptionHandler(Exception.class)
+//    public ResponseEntity<ErrorResponse> handleGlobalException(
+//            Exception ex, WebRequest request) {
+//
+//        ErrorResponse error = new ErrorResponse(
+//                LocalDateTime.now(),
+//                HttpStatus.INTERNAL_SERVER_ERROR.value(),
+//                "INTERNAL_SERVER_ERROR",
+//                "An unexpected error occurred",
+//                request.getDescription(false).replace("uri=", "")
+//        );
+//        return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
+//    }
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGlobalException(
             Exception ex, WebRequest request) {
+
+        ex.printStackTrace();
 
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "INTERNAL_SERVER_ERROR",
-                "An unexpected error occurred",
+                ex.getMessage(),
                 request.getDescription(false).replace("uri=", "")
         );
+
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }
