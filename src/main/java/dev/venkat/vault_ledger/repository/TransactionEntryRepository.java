@@ -7,6 +7,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Repository
 public interface TransactionEntryRepository extends JpaRepository<TransactionEntry, Long> {
@@ -14,4 +15,6 @@ public interface TransactionEntryRepository extends JpaRepository<TransactionEnt
     @Query("SELECT COALESCE(SUM(CASE WHEN t.entryDirection = 'CREDIT' THEN t.amount ELSE -t.amount END), 0) " +
             "FROM TransactionEntry t WHERE t.account.id = :accountId")
     BigDecimal calculateBalanceByAccountId(@Param("accountId") Long accountId);
+
+    List<TransactionEntry> findByAccount_AccountNumberOrderByTransactionHeader_CreatedAtDesc(String accountNumber);
 }

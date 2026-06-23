@@ -40,11 +40,10 @@ public class TransactionController {
         return ResponseEntity.ok(transferTransactionDto);
     }
 
-//
-//    @GetMapping("/account/{id}/history")
-//    public ResponseEntity<List<TransactionDto>> getTransactionHistory(@PathVariable Long id) {
-//        return ResponseEntity.ok(transactionService.getTransactionHistory(id));
-//    }
+    @GetMapping("/{accountNumber}/history")
+    public ResponseEntity<List<TransactionDto>> getTransactionHistory(@PathVariable String accountNumber) {
+        return ResponseEntity.ok(transactionService.getTransactionHistory(accountNumber));
+    }
 
 
 }

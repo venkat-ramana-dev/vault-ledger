@@ -9,7 +9,6 @@ import dev.venkat.vault_ledger.entity.TransactionHeader;
 import dev.venkat.vault_ledger.enums.AccountStatus;
 import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
-import dev.venkat.vault_ledger.exception.AccountNotFoundException;
 import dev.venkat.vault_ledger.mapper.AccountMapper;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
