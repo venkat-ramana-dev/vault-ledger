@@ -1,7 +1,9 @@
 package dev.venkat.vault_ledger.dto;
 
+import lombok.Builder;
+
 import java.math.BigDecimal;
 
-public record TransferRequestDto(String toAccount,
-                                 String fromAccount,
+@Builder
+public record TransferRequestDto(String toAccountNumber,
                                  BigDecimal amount) { }

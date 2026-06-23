@@ -3,6 +3,8 @@ package dev.venkat.vault_ledger.service;
 import dev.venkat.vault_ledger.bootstrap.VaultInitializer;
 import dev.venkat.vault_ledger.dto.AmountDto;
 import dev.venkat.vault_ledger.dto.TransactionDto;
+import dev.venkat.vault_ledger.dto.TransferRequestDto;
+import dev.venkat.vault_ledger.dto.TransferTransactionDto;
 import dev.venkat.vault_ledger.entity.Account;
 import dev.venkat.vault_ledger.entity.TransactionEntry;
 import dev.venkat.vault_ledger.entity.TransactionHeader;
@@ -22,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.LocalDateTime;
 
 @Service
 @RequiredArgsConstructor
@@ -106,6 +109,74 @@ public class TransactionService implements TransactionServiceImpl {
                                                     + "from balance" + getAccountBalance(userAccount.getId()));
         }
     }
+
+    @Transactional
+    @Override
+    public TransferTransactionDto transfer(String fromAccountNumber, TransferRequestDto transferRequestDto) {
+
+        String toAccountNumber = transferRequestDto.toAccountNumber();
+        AmountDto amountDto = new AmountDto(transferRequestDto.amount());
+
+        if (amountDto.amount() == null || amountDto.amount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Transfer amount must be greater than zero.");
+        }
+
+        if (fromAccountNumber.equals(toAccountNumber)) {
+            throw new IllegalArgumentException("Cannot transfer money to the same account.");
+        }
+
+        Account fromAccount = accountRepository.findByAccountNumber(fromAccountNumber)
+                .orElseThrow(() -> new IllegalStateException("System error: From account not found"));
+
+        Account toAccount = accountRepository.findByAccountNumber(toAccountNumber)
+                .orElseThrow(() -> new IllegalStateException("System error: To account not found"));
+
+        if (!fromAccount.getAccountStatus().equals(AccountStatus.ACTIVE)) {
+            throw new IllegalStateException("Sender account is not active.");
+        }
+        if (!toAccount.getAccountStatus().equals(AccountStatus.ACTIVE)) {
+            throw new IllegalStateException("Receiver account is not active.");
+        }
+
+        BigDecimal fromAccountBalance = getAccountBalance(fromAccount.getId());
+        if (fromAccountBalance.compareTo(amountDto.amount()) < 0) {
+            throw new IllegalStateException("Insufficient funds for transfer.");
+        }
+
+
+        TransactionHeader transactionHeader = TransactionHeader.builder()
+                .transactionType(TransactionType.TRANSFER)
+                .build();
+        TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
+
+        TransactionEntry transactionEntryOfFromAccount = TransactionEntry.builder()
+                .amount(amountDto.amount())
+                .entryDirection(EntryDirection.DEBIT)
+                .account(fromAccount)
+                .transactionHeader(savedTransactionHeader)
+                .build();
+        TransactionEntry savedTransactionEntryOfFromAccount = transactionEntryRepository.save(transactionEntryOfFromAccount);
+
+        TransactionEntry transactionEntryOfToAccount = TransactionEntry.builder()
+                .amount(amountDto.amount())
+                .entryDirection(EntryDirection.CREDIT)
+                .account(toAccount)
+                .transactionHeader(savedTransactionHeader)
+                .build();
+        TransactionEntry savedTransactionEntryOfToAccount = transactionEntryRepository.save(transactionEntryOfToAccount);
+
+
+        return TransferTransactionDto.builder()
+                .fromAccountNumber(fromAccountNumber)
+                .fromAccountHolderName(fromAccount.getAccountHolderName())
+                .transactionType(TransactionType.TRANSFER)
+                .toAccountNumber(toAccountNumber)
+                .toAccountHolderName(toAccount.getAccountHolderName())
+                .amount(amountDto.amount())
+                .createdAt(LocalDateTime.now())
+                .build();
+    }
+
 
     public BigDecimal getAccountBalance(Long accountId) {
         return transactionEntryRepository.calculateBalanceByAccountId(accountId);
