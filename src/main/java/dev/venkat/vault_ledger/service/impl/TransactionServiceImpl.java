@@ -8,6 +8,8 @@ import java.util.List;
 
 public interface TransactionServiceImpl {
 
+    TransactionDto deposit(String accountNumber, AmountDto amountDto);
+
     BigDecimal getAccountBalance(Long accountId);
 
 //    TransactionDto deposit(Long id, AmountDto amount);

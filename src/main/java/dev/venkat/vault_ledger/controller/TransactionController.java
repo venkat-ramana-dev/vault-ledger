@@ -1,22 +1,29 @@
-//package dev.venkat.vault_ledger.controller;
-//
-//import dev.venkat.vault_ledger.dto.AmountDto;
-//import dev.venkat.vault_ledger.dto.TransactionDto;
-//import dev.venkat.vault_ledger.dto.TransferDto;
-//import dev.venkat.vault_ledger.service.TransactionService;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.http.ResponseEntity;
-//import org.springframework.web.bind.annotation.*;
-//
-//import java.util.List;
-//
-//@RestController
-//@RequestMapping
-//@RequiredArgsConstructor
-//public class TransactionController {
-//
-//    private final TransactionService transactionService;
-//
+package dev.venkat.vault_ledger.controller;
+
+import dev.venkat.vault_ledger.dto.AmountDto;
+import dev.venkat.vault_ledger.dto.TransactionDto;
+import dev.venkat.vault_ledger.service.TransactionService;
+import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
+
+@RestController
+@RequestMapping("/transaction")
+@RequiredArgsConstructor
+public class TransactionController {
+
+    private final TransactionService transactionService;
+
+    @PutMapping("/{accountNumber}/deposit")
+    public ResponseEntity<TransactionDto> deposit(@PathVariable("accountNumber") String accountNumber,
+                                                  @RequestBody AmountDto amount) {
+
+        TransactionDto transactionDto = transactionService.deposit(accountNumber, amount);
+        return ResponseEntity.ok(transactionDto);
+    }
+
 //    @PutMapping("/account/{id}/deposit")
 //    public ResponseEntity<TransactionDto> deposit(@PathVariable("id") Long id,
 //                                                  @RequestBody AmountDto amount) {
@@ -43,6 +50,6 @@
 //    public ResponseEntity<List<TransactionDto>> getTransactionHistory(@PathVariable Long id) {
 //        return ResponseEntity.ok(transactionService.getTransactionHistory(id));
 //    }
-//
-//
-//}
+
+
+}

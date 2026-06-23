@@ -1,19 +1,67 @@
 package dev.venkat.vault_ledger.service;
 
+import dev.venkat.vault_ledger.bootstrap.VaultInitializer;
+import dev.venkat.vault_ledger.dto.AmountDto;
+import dev.venkat.vault_ledger.dto.TransactionDto;
+import dev.venkat.vault_ledger.entity.TransactionEntry;
+import dev.venkat.vault_ledger.entity.TransactionHeader;
+import dev.venkat.vault_ledger.enums.EntryDirection;
+import dev.venkat.vault_ledger.enums.TransactionType;
+import dev.venkat.vault_ledger.mapper.TransactionEntryMapper;
+import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
+import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
+import dev.venkat.vault_ledger.service.impl.TransactionServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.math.BigDecimal;
 
 @Service
 @RequiredArgsConstructor
-public class TransactionService {
+public class TransactionService implements TransactionServiceImpl {
+
+    private final AccountRepository accountRepository;
+
+    private final TransactionHeaderRepository transactionHeaderRepository;
 
     private final TransactionEntryRepository transactionEntryRepository;
+
+    @Transactional
+    @Override
+    public TransactionDto deposit(String accountNumber, AmountDto amountDto) {
+        TransactionHeader transactionHeader = TransactionHeader.builder()
+                .transactionType(TransactionType.DEPOSIT)
+                .build();
+        TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
+
+        TransactionEntry transactionEntryOfUser = TransactionEntry.builder()
+                .amount(amountDto.amount())
+                .entryDirection(EntryDirection.CREDIT)
+                .account(accountRepository.findByAccountNumber(accountNumber)
+                        .orElseThrow(() -> new IllegalStateException("System error: Vault account not found")))
+                .transactionHeader(savedTransactionHeader)
+                .build();
+        TransactionEntry savedTransactionEntryOfUser = transactionEntryRepository.save(transactionEntryOfUser);
+
+        TransactionEntry transactionEntryOfVault = TransactionEntry.builder()
+                .amount(amountDto.amount())
+                .entryDirection(EntryDirection.DEBIT)
+                .account(accountRepository.findByAccountNumber(VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)
+                        .orElseThrow(() -> new IllegalStateException("System error: Vault account not found")))
+                .transactionHeader(savedTransactionHeader)
+                .build();
+        TransactionEntry savedTransactionEntryOfVault = transactionEntryRepository.save(transactionEntryOfVault);
+
+        return TransactionEntryMapper.mapToTransactionDto(savedTransactionEntryOfUser);
+    }
 
     public BigDecimal getAccountBalance(Long accountId) {
         return transactionEntryRepository.calculateBalanceByAccountId(accountId);
     }
+
 }
 
 
@@ -52,7 +100,7 @@ public class TransactionService {
 //import dev.venkat.vault_ledger.enums.TransactionType;
 //import dev.venkat.vault_ledger.exception.AccountClosedException;
 //import dev.venkat.vault_ledger.exception.InsufficientBalanceException;
-//import dev.venkat.vault_ledger.mapper.TransactionMapper;
+//import dev.venkat.vault_ledger.mapper.TransactionEntryMapper;
 //import dev.venkat.vault_ledger.repository.TransactionRepository;
 //import dev.venkat.vault_ledger.service.impl.TransactionServiceImpl;
 //import jakarta.transaction.Transactional;
@@ -92,7 +140,7 @@ public class TransactionService {
 //
 //            Transaction savedTransaction = transactionRepository.save(transaction);
 //
-//            return TransactionMapper.mapToTransactionDto(savedTransaction);
+//            return TransactionEntryMapper.mapToTransactionDto(savedTransaction);
 //        } else {
 //            throw new AccountClosedException("Account is Closed with id " + id);
 //        }
@@ -117,7 +165,7 @@ public class TransactionService {
 //
 //            transactionRepository.save(transaction);
 //
-//            return TransactionMapper.mapToTransactionDto(transaction);
+//            return TransactionEntryMapper.mapToTransactionDto(transaction);
 //        } else if (!account.getAccountStatus().equals(AccountStatus.ACTIVE)) {
 //            throw new AccountClosedException("Account is closed");
 //        } else {
@@ -149,7 +197,7 @@ public class TransactionService {
 //        List<Transaction> transactions = transactionRepository.findByAccountId(id);
 //
 //        return transactions.stream()
-//                .map(TransactionMapper::mapToTransactionDto)
+//                .map(TransactionEntryMapper::mapToTransactionDto)
 //                .collect(Collectors.toList());
 //    }
 //}

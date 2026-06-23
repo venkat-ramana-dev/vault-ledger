@@ -4,5 +4,4 @@ import java.math.BigDecimal;
 
 public record TransferRequestDto(String toAccount,
                                  String fromAccount,
-                                 BigDecimal amount) {
-}
+                                 BigDecimal amount) { }
