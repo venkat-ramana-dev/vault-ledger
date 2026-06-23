@@ -17,20 +17,20 @@ public class TransactionController {
     private final TransactionService transactionService;
 
     @PutMapping("/{accountNumber}/deposit")
-    public ResponseEntity<TransactionDto> deposit(@PathVariable("accountNumber") String accountNumber,
+    public ResponseEntity<TransactionDto> deposit(@PathVariable String accountNumber,
                                                   @RequestBody AmountDto amount) {
 
         TransactionDto transactionDto = transactionService.deposit(accountNumber, amount);
         return ResponseEntity.ok(transactionDto);
     }
 
-//    @PutMapping("/account/{id}/deposit")
-//    public ResponseEntity<TransactionDto> deposit(@PathVariable("id") Long id,
-//                                                  @RequestBody AmountDto amount) {
-//
-//        TransactionDto transactionDto = transactionService.deposit(id, amount);
-//        return ResponseEntity.ok(transactionDto);
-//    }
+    @PutMapping("/{accountNumber}/withdraw")
+    public ResponseEntity<TransactionDto> withdraw(@PathVariable String accountNumber,
+                                                   @RequestBody AmountDto amount) {
+        TransactionDto transactionDto = transactionService.withdraw(accountNumber, amount);
+        return ResponseEntity.ok(transactionDto);
+    }
+
 //
 //    @PutMapping("/account/{id}/withdraw")
 //    public ResponseEntity<TransactionDto> withdraw(@PathVariable Long id,
