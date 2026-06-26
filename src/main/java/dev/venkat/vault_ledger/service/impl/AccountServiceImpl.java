@@ -1,20 +1,18 @@
 package dev.venkat.vault_ledger.service.impl;
 
 import dev.venkat.vault_ledger.dto.AccountDto;
-import dev.venkat.vault_ledger.entity.Account;
+import dev.venkat.vault_ledger.dto.CreateAccountRequestDto;
 
 import java.util.List;
 
 public interface AccountServiceImpl {
 
-    AccountDto createAccount(AccountDto accountDto);
+    AccountDto createAccount(CreateAccountRequestDto createAccountRequestDto);
 
-    Account getAccountEntityById(Long id);
-
-    AccountDto getAccountById(Long id);
+    AccountDto getAccountDetails(String accountNumber);
 
     List<AccountDto> getAllAccounts();
 
-    String deleteAccountById(Long id);
+    String deleteAccount(String accountNumber);
 
 }

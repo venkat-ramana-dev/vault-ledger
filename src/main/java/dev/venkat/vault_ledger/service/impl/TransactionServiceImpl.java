@@ -2,18 +2,23 @@ package dev.venkat.vault_ledger.service.impl;
 
 import dev.venkat.vault_ledger.dto.AmountDto;
 import dev.venkat.vault_ledger.dto.TransactionDto;
-import dev.venkat.vault_ledger.dto.TransferDto;
+import dev.venkat.vault_ledger.dto.TransferRequestDto;
+import dev.venkat.vault_ledger.dto.TransferTransactionDto;
+import org.springframework.http.ResponseEntity;
 
+import java.math.BigDecimal;
 import java.util.List;
 
 public interface TransactionServiceImpl {
 
-    TransactionDto deposit(Long id, AmountDto amount);
+    TransactionDto deposit(String accountNumber, AmountDto amountDto);
 
-    TransactionDto withdraw(Long id, AmountDto amount);
+    TransactionDto withdraw(String accountNumber, AmountDto amountDto);
 
-    List<TransactionDto> transfer(Long fromId, TransferDto transferDto);
+    TransferTransactionDto transfer(String accountNumber, TransferRequestDto transferRequestDto);
 
-    List<TransactionDto> getTransactionHistory(Long id);
+    List<TransactionDto> getTransactionHistory(String accountNumber);
+
+    BigDecimal getAccountBalance(Long accountId);
 
 }

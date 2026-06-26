@@ -5,37 +5,28 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "transactions")
+@Table(name = "transaction_headers")
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Transaction {
+public class TransactionHeader {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(updatable = false)
+    @Column(name = "header_id", updatable = false)
     private Long id;
-
-    @ManyToOne
-    @JoinColumn(name = "account_id", nullable = false, updatable = false)
-    private Account account;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "transaction_type", nullable = false, updatable = false)
-    private TransactionType transactionType = TransactionType.INITIAL_DEPOSIT;
-
-    @Column(nullable = false, precision = 19, scale = 4, updatable = false)
-    private BigDecimal amount;
+    private TransactionType transactionType;
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 }
-
