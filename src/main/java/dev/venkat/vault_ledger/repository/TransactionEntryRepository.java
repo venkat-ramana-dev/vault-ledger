@@ -16,5 +16,10 @@ public interface TransactionEntryRepository extends JpaRepository<TransactionEnt
             "FROM TransactionEntry t WHERE t.account.id = :accountId")
     BigDecimal calculateBalanceByAccountId(@Param("accountId") Long accountId);
 
+//    SELECT te.* FROM transaction_entries te
+//    JOIN accounts a ON te.account_id = a.id
+//    JOIN transaction_headers th ON te.header_id = th.id
+//    WHERE a.account_number = ?
+//    ORDER BY th.created_at DESC;
     List<TransactionEntry> findByAccount_AccountNumberOrderByTransactionHeader_CreatedAtDesc(String accountNumber);
 }
