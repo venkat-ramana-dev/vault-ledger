@@ -9,12 +9,14 @@ import dev.venkat.vault_ledger.entity.TransactionHeader;
 import dev.venkat.vault_ledger.enums.AccountStatus;
 import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
+import dev.venkat.vault_ledger.exception.AccountNotFoundException;
 import dev.venkat.vault_ledger.mapper.AccountMapper;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
 import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
 import dev.venkat.vault_ledger.service.impl.AccountServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,6 +27,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class AccountService implements AccountServiceImpl {
 
     private final AccountRepository accountRepository;
@@ -39,12 +42,12 @@ public class AccountService implements AccountServiceImpl {
     @Override
     public AccountDto createAccount(CreateAccountRequestDto createAccountRequestDto) {
 
-        if (createAccountRequestDto.initialDeposit().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalArgumentException("Initial deposit cannot be negative.");
-        }
+        log.info("Creating new account for {}",
+                createAccountRequestDto.accountHolderName());
 
         String accountHolderName = createAccountRequestDto.accountHolderName();
         String accountNumber = generateAccountNumber();
+        log.info("Account number generated: {}", accountNumber);
         Account account = Account.builder()
                 .accountNumber(accountNumber)
                 .accountHolderName(accountHolderName)
@@ -52,11 +55,17 @@ public class AccountService implements AccountServiceImpl {
                 .build();
 
         Account savedAccount = accountRepository.save(account);
+        log.info("New account is created successfully. Account Number: {}. Account Holder Name: {}",
+                accountNumber,
+                accountHolderName);
 
         if (createAccountRequestDto.initialDeposit().compareTo(BigDecimal.ZERO) > 0) {
-
+            log.info("Processing initial deposit of {} for account {}",
+                    createAccountRequestDto.initialDeposit(),
+                    savedAccount);
             Account vault = accountRepository.findByAccountNumber(VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)
-                    .orElseThrow(() -> new IllegalStateException("System error: Vault account not found"));
+                    .orElseThrow(() -> new AccountNotFoundException("System error: Vault account not found. AccountNumber: " +
+                            VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER));
 
             TransactionHeader transactionHeader = TransactionHeader.builder()
                     .transactionType(TransactionType.INITIAL_DEPOSIT)
@@ -81,7 +90,7 @@ public class AccountService implements AccountServiceImpl {
             transactionEntryRepository.save(vaultTransactionEntry);
         }
         BigDecimal startingBalance = createAccountRequestDto.initialDeposit();
-
+        log.info("Initial deposit is processed.");
         return AccountMapper.mapToAccountDto(savedAccount, startingBalance);
     }
 
@@ -89,7 +98,7 @@ public class AccountService implements AccountServiceImpl {
     @Override
     public AccountDto getAccountDetails(String accountNumber) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
         BigDecimal currentBalance = transactionService.getAccountBalance(account.getId());
         return AccountMapper.mapToAccountDto(account, currentBalance);
     }
@@ -109,11 +118,12 @@ public class AccountService implements AccountServiceImpl {
 
     @Override
     public String deleteAccount(String accountNumber) {
-
+        log.info("Closing account. {}",accountNumber);
         Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Account not found"));
+                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
         account.setAccountStatus(AccountStatus.CLOSED);
         accountRepository.save(account);
+        log.info("Account closed successfully. {}",accountNumber);
         return "Account deleted successfully with Acc No : " + account.getAccountNumber();
     }
 
