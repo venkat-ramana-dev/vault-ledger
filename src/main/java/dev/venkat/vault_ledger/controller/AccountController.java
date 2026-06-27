@@ -3,6 +3,7 @@ package dev.venkat.vault_ledger.controller;
 import dev.venkat.vault_ledger.dto.AccountDto;
 import dev.venkat.vault_ledger.dto.CreateAccountRequestDto;
 import dev.venkat.vault_ledger.service.AccountService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -17,7 +18,7 @@ public class AccountController {
     private final AccountService accountService;
 
     @PostMapping("/create")
-    public ResponseEntity<AccountDto> createAccount(@RequestBody CreateAccountRequestDto createAccountRequestDto) {
+    public ResponseEntity<AccountDto> createAccount(@Valid @RequestBody CreateAccountRequestDto createAccountRequestDto) {
 
         AccountDto savedAccountDto = accountService.createAccount(createAccountRequestDto);
         return ResponseEntity.ok(savedAccountDto);
