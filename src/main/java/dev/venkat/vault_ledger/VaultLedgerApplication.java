@@ -7,7 +7,8 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 public class VaultLedgerApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(VaultLedgerApplication.class, args);
+
+        SpringApplication.run(VaultLedgerApplication.class, args);
 	}
 
 }
