@@ -12,12 +12,14 @@ import dev.venkat.vault_ledger.enums.AccountStatus;
 import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
 import dev.venkat.vault_ledger.exception.AccountClosedException;
+import dev.venkat.vault_ledger.exception.AccountNotFoundException;
 import dev.venkat.vault_ledger.exception.InsufficientBalanceException;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
 import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
 import dev.venkat.vault_ledger.service.impl.TransactionServiceImpl;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,7 @@ import java.util.List;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TransactionService implements TransactionServiceImpl {
 
     private final AccountRepository accountRepository;
@@ -38,6 +41,10 @@ public class TransactionService implements TransactionServiceImpl {
     @Transactional
     @Override
     public TransactionDto deposit(String accountNumber, AmountDto amountDto) {
+
+        log.info("Deposit initiated: Account Number: {}. Amount: {}",
+                accountNumber,
+                amountDto.amount());
         TransactionHeader transactionHeader = TransactionHeader.builder()
                 .transactionType(TransactionType.DEPOSIT)
                 .build();
@@ -47,20 +54,23 @@ public class TransactionService implements TransactionServiceImpl {
                 .amount(amountDto.amount())
                 .entryDirection(EntryDirection.CREDIT)
                 .account(accountRepository.findByAccountNumber(accountNumber)
-                        .orElseThrow(() -> new IllegalStateException("System error: Account not found")))
+                        .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber)))
                 .transactionHeader(savedTransactionHeader)
                 .build();
-        TransactionEntry savedTransactionEntryOfUser = transactionEntryRepository.save(transactionEntryOfUser);
+        transactionEntryRepository.save(transactionEntryOfUser);
 
         TransactionEntry transactionEntryOfVault = TransactionEntry.builder()
                 .amount(amountDto.amount())
                 .entryDirection(EntryDirection.DEBIT)
                 .account(accountRepository.findByAccountNumber(VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)
-                        .orElseThrow(() -> new IllegalStateException("System error: Vault account not found")))
+                        .orElseThrow(() -> new AccountNotFoundException("Account not found: " + VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)))
                 .transactionHeader(savedTransactionHeader)
                 .build();
-        TransactionEntry savedTransactionEntryOfVault = transactionEntryRepository.save(transactionEntryOfVault);
+        transactionEntryRepository.save(transactionEntryOfVault);
 
+        log.info("Deposit completed. Account Number: {}. Amount: {}",
+                accountNumber,
+                amountDto.amount());
         return TransactionDto.builder()
                 .transactionType(TransactionType.DEPOSIT)
                 .entryDirection(EntryDirection.DEBIT)
@@ -73,18 +83,21 @@ public class TransactionService implements TransactionServiceImpl {
     @Override
     public TransactionDto withdraw(String accountNumber, AmountDto amountDto) {
 
+        log.info("Withdrawal initiated. Account Number: {}. Amount: {}",
+                accountNumber,
+                amountDto.amount());
         Account userAccount = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new IllegalStateException("System error: Account not found"));
+                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
 
         if(userAccount.getAccountStatus().equals(AccountStatus.CLOSED)){
-            throw  new AccountClosedException("Account is closed");
+            throw  new AccountClosedException("Account is closed: " + accountNumber);
         }
         if (amountDto.amount().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalStateException("Withdrawal amount cannot be negative");
+            throw new IllegalStateException("Withdrawal amount cannot be negative: " + amountDto.amount());
         }
         if (getAccountBalance(userAccount.getId()).compareTo(amountDto.amount()) < 0){
-            throw new InsufficientBalanceException("Insufficient Balance. Cannot withdraw amount :" + amountDto.amount()
-                    + "from balance" + getAccountBalance(userAccount.getId()));
+            throw new InsufficientBalanceException("Insufficient Balance. Cannot withdraw amount: " + amountDto.amount()
+                    + " from balance: " + getAccountBalance(userAccount.getId()));
         }
 
 
@@ -97,20 +110,23 @@ public class TransactionService implements TransactionServiceImpl {
                 .amount(amountDto.amount())
                 .entryDirection(EntryDirection.DEBIT)
                 .account(accountRepository.findByAccountNumber(accountNumber)
-                        .orElseThrow(() -> new IllegalStateException("System error: Account not found")))
+                        .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber)))
                 .transactionHeader(savedTransactionHeader)
                 .build();
-        TransactionEntry savedTransactionEntryOfUser = transactionEntryRepository.save(transactionEntryOfUser);
+        transactionEntryRepository.save(transactionEntryOfUser);
 
         TransactionEntry transactionEntryOfVault = TransactionEntry.builder()
                 .amount(amountDto.amount())
                 .entryDirection(EntryDirection.CREDIT)
                 .account(accountRepository.findByAccountNumber(VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)
-                        .orElseThrow(() -> new IllegalStateException("System error: Vault account not found")))
+                        .orElseThrow(() -> new AccountNotFoundException("Account not found: " + VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)))
                 .transactionHeader(savedTransactionHeader)
                 .build();
-        TransactionEntry savedTransactionEntryOfVault = transactionEntryRepository.save(transactionEntryOfVault);
+        transactionEntryRepository.save(transactionEntryOfVault);
 
+        log.info("Withdrawal completed. Account Number: {}. Amount: {}",
+                accountNumber,
+                amountDto.amount());
         return TransactionDto.builder()
                 .transactionType(TransactionType.WITHDRAWAl)
                 .entryDirection(EntryDirection.CREDIT)
@@ -124,33 +140,39 @@ public class TransactionService implements TransactionServiceImpl {
     @Override
     public TransferTransactionDto transfer(String fromAccountNumber, TransferRequestDto transferRequestDto) {
 
+        log.info("Transfer initiated. From Account Number: {}. To Account Number: {}. Amount: {}",
+                fromAccountNumber,
+                transferRequestDto.toAccountNumber(),
+                transferRequestDto.amount());
         String toAccountNumber = transferRequestDto.toAccountNumber();
         AmountDto amountDto = new AmountDto(transferRequestDto.amount());
 
         if (amountDto.amount() == null || amountDto.amount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Transfer amount must be greater than zero.");
+            throw new IllegalArgumentException("Transfer amount must be greater than zero: " + amountDto.amount());
         }
 
         if (fromAccountNumber.equals(toAccountNumber)) {
-            throw new IllegalArgumentException("Cannot transfer money to the same account.");
+            throw new IllegalArgumentException("Cannot transfer money to the same account: " + toAccountNumber);
         }
 
         Account fromAccount = accountRepository.findByAccountNumber(fromAccountNumber)
-                .orElseThrow(() -> new IllegalStateException("System error: From account not found"));
+                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + fromAccountNumber));
 
         Account toAccount = accountRepository.findByAccountNumber(toAccountNumber)
-                .orElseThrow(() -> new IllegalStateException("System error: To account not found"));
+                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + toAccountNumber));
 
         if (!fromAccount.getAccountStatus().equals(AccountStatus.ACTIVE)) {
-            throw new IllegalStateException("Sender account is not active.");
+            throw new IllegalStateException("Sender account is not active: " + fromAccountNumber);
         }
         if (!toAccount.getAccountStatus().equals(AccountStatus.ACTIVE)) {
-            throw new IllegalStateException("Receiver account is not active.");
+            throw new IllegalStateException("Receiver account is not active: " + toAccountNumber);
         }
 
         BigDecimal fromAccountBalance = getAccountBalance(fromAccount.getId());
         if (fromAccountBalance.compareTo(amountDto.amount()) < 0) {
-            throw new IllegalStateException("Insufficient funds for transfer.");
+            throw new IllegalStateException("Insufficient funds for transfer." +
+                                            "Amount: " + amountDto.amount() +
+                                            " Balance: " + fromAccountBalance);
         }
 
 
@@ -165,7 +187,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .account(fromAccount)
                 .transactionHeader(savedTransactionHeader)
                 .build();
-        TransactionEntry savedTransactionEntryOfFromAccount = transactionEntryRepository.save(transactionEntryOfFromAccount);
+        transactionEntryRepository.save(transactionEntryOfFromAccount);
 
         TransactionEntry transactionEntryOfToAccount = TransactionEntry.builder()
                 .amount(amountDto.amount())
@@ -173,8 +195,12 @@ public class TransactionService implements TransactionServiceImpl {
                 .account(toAccount)
                 .transactionHeader(savedTransactionHeader)
                 .build();
-        TransactionEntry savedTransactionEntryOfToAccount = transactionEntryRepository.save(transactionEntryOfToAccount);
+        transactionEntryRepository.save(transactionEntryOfToAccount);
 
+        log.info("Transfer completed successfully. Sender: {}.Receiver: {}.Amount: {}",
+                fromAccount.getAccountHolderName(),
+                toAccount.getAccountHolderName(),
+                amountDto.amount());
 
         return TransferTransactionDto.builder()
                 .fromAccountNumber(fromAccountNumber)
@@ -190,7 +216,7 @@ public class TransactionService implements TransactionServiceImpl {
     public List<TransactionDto> getTransactionHistory(String accountNumber) {
         boolean accountExists = accountRepository.findByAccountNumber(accountNumber).isPresent();
         if (!accountExists) {
-            throw new IllegalArgumentException("Account not found for number: " + accountNumber);
+            throw new AccountNotFoundException("Account not found: " + accountNumber);
         }
 
         List<TransactionEntry> entries = transactionEntryRepository
