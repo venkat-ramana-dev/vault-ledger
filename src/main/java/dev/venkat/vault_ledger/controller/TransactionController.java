@@ -5,6 +5,7 @@ import dev.venkat.vault_ledger.dto.TransactionDto;
 import dev.venkat.vault_ledger.dto.TransferRequestDto;
 import dev.venkat.vault_ledger.dto.TransferTransactionDto;
 import dev.venkat.vault_ledger.service.TransactionService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -20,7 +21,7 @@ public class TransactionController {
 
     @PutMapping("/{accountNumber}/deposit")
     public ResponseEntity<TransactionDto> deposit(@PathVariable String accountNumber,
-                                                  @RequestBody AmountDto amount) {
+                                                  @Valid @RequestBody AmountDto amount) {
 
         TransactionDto transactionDto = transactionService.deposit(accountNumber, amount);
         return ResponseEntity.ok(transactionDto);
@@ -28,14 +29,14 @@ public class TransactionController {
 
     @PutMapping("/{accountNumber}/withdraw")
     public ResponseEntity<TransactionDto> withdraw(@PathVariable String accountNumber,
-                                                   @RequestBody AmountDto amount) {
+                                                   @Valid @RequestBody AmountDto amount) {
         TransactionDto transactionDto = transactionService.withdraw(accountNumber, amount);
         return ResponseEntity.ok(transactionDto);
     }
 
     @PutMapping("/{fromAccountNumber}/transfer")
     public ResponseEntity<TransferTransactionDto> transfer(@PathVariable String fromAccountNumber,
-                                                                          @RequestBody TransferRequestDto transferRequestDto) {
+                                                           @Valid @RequestBody TransferRequestDto transferRequestDto) {
         TransferTransactionDto transferTransactionDto = transactionService.transfer(fromAccountNumber, transferRequestDto);
         return ResponseEntity.ok(transferTransactionDto);
     }
@@ -44,6 +45,5 @@ public class TransactionController {
     public ResponseEntity<List<TransactionDto>> getTransactionHistory(@PathVariable String accountNumber) {
         return ResponseEntity.ok(transactionService.getTransactionHistory(accountNumber));
     }
-
 
 }
