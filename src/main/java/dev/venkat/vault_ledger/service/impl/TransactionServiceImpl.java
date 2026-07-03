@@ -4,7 +4,6 @@ import dev.venkat.vault_ledger.dto.AmountDto;
 import dev.venkat.vault_ledger.dto.TransactionDto;
 import dev.venkat.vault_ledger.dto.TransferRequestDto;
 import dev.venkat.vault_ledger.dto.TransferTransactionDto;
-import org.springframework.http.ResponseEntity;
 
 import java.math.BigDecimal;
 import java.util.List;

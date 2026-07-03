@@ -31,10 +31,14 @@ public class Account {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private AccountStatus accountStatus = AccountStatus.ACTIVE;
+    private AccountStatus accountStatus;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
+
+    @OneToOne
+    @JoinColumn(name = "user_id", nullable = false, updatable = false)
+    private User user;
 
 }
