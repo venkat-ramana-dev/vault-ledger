@@ -6,6 +6,7 @@ import dev.venkat.vault_ledger.dto.CreateAccountRequestDto;
 import dev.venkat.vault_ledger.entity.Account;
 import dev.venkat.vault_ledger.entity.TransactionEntry;
 import dev.venkat.vault_ledger.entity.TransactionHeader;
+import dev.venkat.vault_ledger.entity.User;
 import dev.venkat.vault_ledger.enums.AccountStatus;
 import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
@@ -40,7 +41,7 @@ public class AccountService implements AccountServiceImpl {
 
     @Transactional
     @Override
-    public AccountDto createAccount(CreateAccountRequestDto createAccountRequestDto) {
+    public AccountDto createAccount(User user, CreateAccountRequestDto createAccountRequestDto) {
 
         log.info("Creating new account for {}",
                 createAccountRequestDto.accountHolderName());
@@ -52,6 +53,7 @@ public class AccountService implements AccountServiceImpl {
                 .accountNumber(accountNumber)
                 .accountHolderName(accountHolderName)
                 .accountStatus(AccountStatus.ACTIVE)
+                .user(user)
                 .build();
 
         Account savedAccount = accountRepository.save(account);

@@ -25,7 +25,7 @@ CREATE TABLE accounts
 
     created_at          TIMESTAMP NOT NULL,
 
-    CONSTRAINT fk_accounts _user
+    CONSTRAINT fk_accounts_user
         FOREIGN KEY (user_id)
         REFERENCES users(user_id)
 );
