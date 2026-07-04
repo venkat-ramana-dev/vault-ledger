@@ -107,6 +107,15 @@ public class AccountService implements AccountServiceImpl {
 
     @Transactional
     @Override
+    public AccountDto getAccountDetails(User user) {
+        Account account = accountRepository.findByUser(user)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found for username: " + user.getUsername()));
+        BigDecimal currentBalance = transactionService.getAccountBalance(account.getId());
+        return AccountMapper.mapToAccountDto(account, currentBalance);
+    }
+
+    @Transactional
+    @Override
     public List<AccountDto> getAllAccounts() {
         List<Account> accounts = accountRepository.findAll();
         List<AccountDto> accountDtos = new ArrayList<>();

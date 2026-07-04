@@ -1,13 +1,12 @@
 package dev.venkat.vault_ledger.service;
 
-import dev.venkat.vault_ledger.dto.AccountDto;
-import dev.venkat.vault_ledger.dto.AuthRequestDto;
-import dev.venkat.vault_ledger.dto.AuthResponseDto;
-import dev.venkat.vault_ledger.dto.CreateAccountRequestDto;
+import dev.venkat.vault_ledger.dto.*;
 import dev.venkat.vault_ledger.entity.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -37,4 +36,20 @@ public class AuthService {
                 .accountHolderName(savedAccountDto.accountHolderName())
                 .build();
     }
+
+    public AuthResponseDto login(LoginRequestDto request) {
+
+        User user = userService.login(request.username(), request.password());
+
+        AccountDto accountDto = accountService.getAccountDetails(user);
+
+        return AuthResponseDto.builder()
+                .username(request.username())
+                .balance(accountDto.balance())
+                .accountStatus(accountDto.accountStatus())
+                .accountHolderName(accountDto.accountHolderName())
+                .accountNumber(accountDto.accountNumber())
+                .build();
+    }
+
 }

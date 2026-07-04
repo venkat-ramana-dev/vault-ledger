@@ -16,4 +16,5 @@ public interface AccountServiceImpl {
 
     String deleteAccount(String accountNumber);
 
+    AccountDto getAccountDetails(User user);
 }

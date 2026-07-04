@@ -2,6 +2,7 @@ package dev.venkat.vault_ledger.service;
 
 import dev.venkat.vault_ledger.entity.User;
 import dev.venkat.vault_ledger.enums.UserRole;
+import dev.venkat.vault_ledger.exception.UserNotFoundException;
 import dev.venkat.vault_ledger.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -36,6 +37,18 @@ public class UserService {
         log.info("New user created.");
 
         return newUser;
+    }
+
+    public User login(String username, String password) {
+
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(()-> new UserNotFoundException("USER_NOT_FOUND."));
+
+        if (passwordEncoder.matches(password, user.getPassword())) {
+            return user;
+        } else {
+            throw new IllegalArgumentException("Incorrect_Password.");
+        }
     }
 }
 

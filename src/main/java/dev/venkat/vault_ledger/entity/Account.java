@@ -38,7 +38,7 @@ public class Account {
     private LocalDateTime createdAt;
 
     @OneToOne
-    @JoinColumn(name = "user_id", nullable = false, updatable = false)
+    @JoinColumn(name = "user_id", nullable = false, updatable = false, unique = true)
     private User user;
 
 }
