@@ -6,7 +6,8 @@ import lombok.Builder;
 import java.math.BigDecimal;
 
 @Builder
-public record AuthResponseDto(String username,
+public record AuthResponseDto(String token,
+                              String username,
                               String accountNumber,
                               String accountHolderName,
                               AccountStatus accountStatus,
