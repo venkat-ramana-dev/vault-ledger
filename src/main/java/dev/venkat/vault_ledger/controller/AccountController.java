@@ -19,13 +19,6 @@ public class AccountController {
 
     private final AccountService accountService;
 
-    @PostMapping("/create")
-    public ResponseEntity<AccountDto> createAccount(@Valid @RequestBody CreateAccountRequestDto createAccountRequestDto) {
-
-        AccountDto savedAccountDto = accountService.createAccount(createAccountRequestDto);
-        return ResponseEntity.ok(savedAccountDto);
-    }
-
     @GetMapping("/{accountNumber}")
     public ResponseEntity<AccountDto> getAccountDetails(@PathVariable String accountNumber) {
         AccountDto accountDto = accountService.getAccountDetails(accountNumber);

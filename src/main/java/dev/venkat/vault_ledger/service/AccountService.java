@@ -6,6 +6,7 @@ import dev.venkat.vault_ledger.dto.CreateAccountRequestDto;
 import dev.venkat.vault_ledger.entity.Account;
 import dev.venkat.vault_ledger.entity.TransactionEntry;
 import dev.venkat.vault_ledger.entity.TransactionHeader;
+import dev.venkat.vault_ledger.entity.User;
 import dev.venkat.vault_ledger.enums.AccountStatus;
 import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
@@ -40,18 +41,18 @@ public class AccountService implements AccountServiceImpl {
 
     @Transactional
     @Override
-    public AccountDto createAccount(CreateAccountRequestDto createAccountRequestDto) {
+    public AccountDto createAccount(User user, CreateAccountRequestDto createAccountRequestDto) {
 
         log.info("Creating new account for {}",
                 createAccountRequestDto.accountHolderName());
 
         String accountHolderName = createAccountRequestDto.accountHolderName();
         String accountNumber = generateAccountNumber();
-        log.info("Account number generated: {}", accountNumber);
         Account account = Account.builder()
                 .accountNumber(accountNumber)
                 .accountHolderName(accountHolderName)
                 .accountStatus(AccountStatus.ACTIVE)
+                .user(user)
                 .build();
 
         Account savedAccount = accountRepository.save(account);
@@ -105,6 +106,15 @@ public class AccountService implements AccountServiceImpl {
 
     @Transactional
     @Override
+    public AccountDto getAccountDetails(User user) {
+        Account account = accountRepository.findByUser(user)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found for username: " + user.getUsername()));
+        BigDecimal currentBalance = transactionService.getAccountBalance(account.getId());
+        return AccountMapper.mapToAccountDto(account, currentBalance);
+    }
+
+    @Transactional
+    @Override
     public List<AccountDto> getAllAccounts() {
         List<Account> accounts = accountRepository.findAll();
         List<AccountDto> accountDtos = new ArrayList<>();
@@ -116,6 +126,7 @@ public class AccountService implements AccountServiceImpl {
         return accountDtos;
     }
 
+    @Transactional
     @Override
     public String deleteAccount(String accountNumber) {
         log.info("Closing account. {}",accountNumber);

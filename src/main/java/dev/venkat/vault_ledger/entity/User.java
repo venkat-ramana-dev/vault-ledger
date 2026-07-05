@@ -1,44 +1,40 @@
 package dev.venkat.vault_ledger.entity;
 
 import dev.venkat.vault_ledger.enums.AccountStatus;
+import dev.venkat.vault_ledger.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.CreationTimestamp;
 
-import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "accounts")
+@Table(name = "users")
 
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Account {
+public class User {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "account_id", updatable = false)
+    @Column(name = "user_id", updatable = false)
     private Long id;
 
-    @Column(name = "account_number", unique = true, updatable = false, nullable = false)
-    private String accountNumber;
+    @Column(name = "username", unique = true, updatable = false, nullable = false)
+    private String username;
 
-    @Column(name = "account_holder_name", nullable = false)
-    private String accountHolderName;
+    @Column(name = "password", nullable = false)
+    private String password;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private AccountStatus accountStatus;
+    private UserRole userRole;
 
     @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
     private LocalDateTime createdAt;
-
-    @OneToOne
-    @JoinColumn(name = "user_id", nullable = false, updatable = false, unique = true)
-    private User user;
 
 }
