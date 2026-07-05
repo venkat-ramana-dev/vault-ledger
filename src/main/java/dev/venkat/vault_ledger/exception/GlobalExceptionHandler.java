@@ -25,7 +25,7 @@ public class GlobalExceptionHandler {
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", "")
         );
-        log.error("An unexpected error occurred: ", ex);
+        log.error("Unhandled exception occurred", ex);
         return new ResponseEntity<>(error, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 
@@ -74,12 +74,12 @@ public class GlobalExceptionHandler {
         );
 
         log.warn(ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
     @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<ErrorResponse> UserNotFoundException(
-            AccountNotFoundException ex, WebRequest request) {
+    public ResponseEntity<ErrorResponse> handleInvalidCredentials(
+            InvalidCredentialsException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
@@ -90,7 +90,23 @@ public class GlobalExceptionHandler {
         );
 
         log.warn(ex.getMessage());
-        return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
+        return new ResponseEntity<>(error, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(SameAccountTransferException.class)
+    public ResponseEntity<ErrorResponse> handleSameAccountTransfer(
+            SameAccountTransferException ex, WebRequest request) {
+
+        ErrorResponse error = new ErrorResponse(
+                LocalDateTime.now(),
+                HttpStatus.NOT_FOUND.value(),
+                "SAME_ACCOUNT_TRANSFER",
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", "")
+        );
+
+        log.warn(ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -131,7 +147,7 @@ public class GlobalExceptionHandler {
                 request.getDescription(false).replace("uri=", "")
         );
 
-        log.warn(ex.getMessage());
+        log.warn("Constraint validation failed: {}", ex.getMessage());
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 }

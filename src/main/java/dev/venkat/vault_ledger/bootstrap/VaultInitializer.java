@@ -35,11 +35,8 @@ public class VaultInitializer implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        // 1. Check if the Vault already exists
-        log.info("Checking if the Vault already exists.");
         Optional<Account> vault = accountRepository.findByAccountNumber(SYSTEM_VAULT_ACCOUNT_NUMBER);
 
-        // 2. If it does not exist, create it
         if (vault.isEmpty()) {
 
             User system = User.builder()

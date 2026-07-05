@@ -44,6 +44,7 @@ public class UserService implements UserServiceImpl {
         return newUser;
     }
 
+    @Transactional
     @Override
     public User findByUsername(String username) {
         User user = userRepository.findByUsername(username)

@@ -48,7 +48,6 @@ public class AccountService implements AccountServiceImpl {
 
         String accountHolderName = createAccountRequestDto.accountHolderName();
         String accountNumber = generateAccountNumber();
-        log.info("Account number generated: {}", accountNumber);
         Account account = Account.builder()
                 .accountNumber(accountNumber)
                 .accountHolderName(accountHolderName)
@@ -127,6 +126,7 @@ public class AccountService implements AccountServiceImpl {
         return accountDtos;
     }
 
+    @Transactional
     @Override
     public String deleteAccount(String accountNumber) {
         log.info("Closing account. {}",accountNumber);

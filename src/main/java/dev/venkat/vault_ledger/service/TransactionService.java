@@ -14,6 +14,7 @@ import dev.venkat.vault_ledger.enums.TransactionType;
 import dev.venkat.vault_ledger.exception.AccountClosedException;
 import dev.venkat.vault_ledger.exception.AccountNotFoundException;
 import dev.venkat.vault_ledger.exception.InsufficientBalanceException;
+import dev.venkat.vault_ledger.exception.SameAccountTransferException;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
 import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
@@ -92,9 +93,6 @@ public class TransactionService implements TransactionServiceImpl {
         if(userAccount.getAccountStatus().equals(AccountStatus.CLOSED)){
             throw  new AccountClosedException("Account is closed: " + accountNumber);
         }
-        if (amountDto.amount().compareTo(BigDecimal.ZERO) < 0) {
-            throw new IllegalStateException("Withdrawal amount cannot be negative: " + amountDto.amount());
-        }
         if (getAccountBalance(userAccount.getId()).compareTo(amountDto.amount()) < 0){
             throw new InsufficientBalanceException("Insufficient Balance. Cannot withdraw amount: " + amountDto.amount()
                     + " from balance: " + getAccountBalance(userAccount.getId()));
@@ -147,12 +145,8 @@ public class TransactionService implements TransactionServiceImpl {
         String toAccountNumber = transferRequestDto.toAccountNumber();
         AmountDto amountDto = new AmountDto(transferRequestDto.amount());
 
-        if (amountDto.amount() == null || amountDto.amount().compareTo(BigDecimal.ZERO) <= 0) {
-            throw new IllegalArgumentException("Transfer amount must be greater than zero: " + amountDto.amount());
-        }
-
         if (fromAccountNumber.equals(toAccountNumber)) {
-            throw new IllegalArgumentException("Cannot transfer money to the same account: " + toAccountNumber);
+            throw new SameAccountTransferException("Cannot transfer money to the same account: " + toAccountNumber);
         }
 
         Account fromAccount = accountRepository.findByAccountNumber(fromAccountNumber)
@@ -162,15 +156,15 @@ public class TransactionService implements TransactionServiceImpl {
                 .orElseThrow(() -> new AccountNotFoundException("Account not found: " + toAccountNumber));
 
         if (!fromAccount.getAccountStatus().equals(AccountStatus.ACTIVE)) {
-            throw new IllegalStateException("Sender account is not active: " + fromAccountNumber);
+            throw new AccountClosedException("Account is closed: " + fromAccountNumber);
         }
         if (!toAccount.getAccountStatus().equals(AccountStatus.ACTIVE)) {
-            throw new IllegalStateException("Receiver account is not active: " + toAccountNumber);
+            throw new AccountClosedException("Account is closed: " + toAccountNumber);
         }
 
         BigDecimal fromAccountBalance = getAccountBalance(fromAccount.getId());
         if (fromAccountBalance.compareTo(amountDto.amount()) < 0) {
-            throw new IllegalStateException("Insufficient funds for transfer." +
+            throw new InsufficientBalanceException("Insufficient funds for transfer." +
                                             "Amount: " + amountDto.amount() +
                                             " Balance: " + fromAccountBalance);
         }
@@ -213,6 +207,8 @@ public class TransactionService implements TransactionServiceImpl {
                 .build();
     }
 
+    @Transactional
+    @Override
     public List<TransactionDto> getTransactionHistory(String accountNumber) {
         boolean accountExists = accountRepository.findByAccountNumber(accountNumber).isPresent();
         if (!accountExists) {
@@ -231,6 +227,8 @@ public class TransactionService implements TransactionServiceImpl {
         ).toList();
     }
 
+    @Transactional
+    @Override
     public BigDecimal getAccountBalance(Long accountId) {
         return transactionEntryRepository.calculateBalanceByAccountId(accountId);
     }

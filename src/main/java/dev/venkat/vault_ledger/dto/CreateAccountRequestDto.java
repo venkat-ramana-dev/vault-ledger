@@ -11,7 +11,6 @@ import java.math.BigDecimal;
 @Builder
 public record CreateAccountRequestDto(
 
-        @PathVariable
         @NotBlank(message = "Account name cannot be Empty.")
         @Size(min = 2, max = 120, message = "Account name must be between 2 and 120 characters.")
         String accountHolderName,
