@@ -2,6 +2,7 @@ package dev.venkat.vault_ledger.service;
 
 import dev.venkat.vault_ledger.dto.*;
 import dev.venkat.vault_ledger.entity.User;
+import dev.venkat.vault_ledger.enums.UserRole;
 import dev.venkat.vault_ledger.exception.InvalidCredentialsException;
 import dev.venkat.vault_ledger.service.impl.AuthServiceImpl;
 import lombok.RequiredArgsConstructor;
@@ -43,6 +44,7 @@ public class AuthService implements AuthServiceImpl {
         return AuthResponseDto.builder()
                 .token(token)
                 .username(request.username())
+                .role(savedUser.getUserRole())
                 .balance(savedAccountDto.balance())
                 .accountStatus(savedAccountDto.accountStatus())
                 .accountNumber(savedAccountDto.accountNumber())
@@ -66,11 +68,24 @@ public class AuthService implements AuthServiceImpl {
 
         String token = jwtService.generateToken(request.username());
 
+        if (!user.getUserRole().equals(UserRole.USER)) {
+            return AuthResponseDto.builder()
+                    .token(token)
+                    .username(request.username())
+                    .role(user.getUserRole())
+                    .accountNumber(null)
+                    .balance(null)
+                    .accountHolderName(null)
+                    .accountStatus(null)
+                    .build();
+        }
+
         AccountDto accountDto = accountService.getAccountDetails(user);
 
         return AuthResponseDto.builder()
                 .token(token)
                 .username(request.username())
+                .role(user.getUserRole())
                 .balance(accountDto.balance())
                 .accountStatus(accountDto.accountStatus())
                 .accountHolderName(accountDto.accountHolderName())
