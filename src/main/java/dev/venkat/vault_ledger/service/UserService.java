@@ -2,24 +2,29 @@ package dev.venkat.vault_ledger.service;
 
 import dev.venkat.vault_ledger.entity.User;
 import dev.venkat.vault_ledger.enums.UserRole;
-import dev.venkat.vault_ledger.exception.UserNotFoundException;
+import dev.venkat.vault_ledger.exception.InvalidCredentialsException;
 import dev.venkat.vault_ledger.repository.UserRepository;
+import dev.venkat.vault_ledger.service.impl.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserService {
+public class UserService implements UserServiceImpl {
 
     private final UserRepository userRepository;
 
     private final PasswordEncoder passwordEncoder;
 
+    @Transactional
+    @Override
     public User createUser(String username, String password) {
         Optional<User> user = userRepository.findByUsername(username);
 
@@ -39,17 +44,14 @@ public class UserService {
         return newUser;
     }
 
-    public User login(String username, String password) {
-
+    @Override
+    public User findByUsername(String username) {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(()-> new UserNotFoundException("USER_NOT_FOUND."));
+                .orElseThrow(()-> new UsernameNotFoundException("Username not found."));
 
-        if (passwordEncoder.matches(password, user.getPassword())) {
-            return user;
-        } else {
-            throw new IllegalArgumentException("Incorrect_Password.");
-        }
+        return user;
     }
+
 }
 
 

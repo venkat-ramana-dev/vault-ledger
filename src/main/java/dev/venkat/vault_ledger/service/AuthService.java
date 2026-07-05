@@ -2,8 +2,13 @@ package dev.venkat.vault_ledger.service;
 
 import dev.venkat.vault_ledger.dto.*;
 import dev.venkat.vault_ledger.entity.User;
+import dev.venkat.vault_ledger.exception.InvalidCredentialsException;
 import dev.venkat.vault_ledger.service.impl.AuthServiceImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -17,6 +22,8 @@ public class AuthService implements AuthServiceImpl {
     private final AccountService accountService;
 
     private final JwtService jwtService;
+
+    private final AuthenticationManager authenticationManager;
 
     @Transactional
     @Override
@@ -47,9 +54,17 @@ public class AuthService implements AuthServiceImpl {
     @Override
     public AuthResponseDto login(LoginRequestDto request) {
 
-        User user = userService.login(request.username(), request.password());
+        Authentication authenticationResponse = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.username(), request.password()));
 
-        String token = jwtService.generateToken(user.getUsername());
+        if (authenticationResponse.isAuthenticated()) {
+            SecurityContextHolder.getContext().setAuthentication(authenticationResponse);
+        } else {
+            throw  new InvalidCredentialsException("Incorrect username or password");
+        }
+
+        User user = userService.findByUsername(request.username());
+
+        String token = jwtService.generateToken(request.username());
 
         AccountDto accountDto = accountService.getAccountDetails(user);
 

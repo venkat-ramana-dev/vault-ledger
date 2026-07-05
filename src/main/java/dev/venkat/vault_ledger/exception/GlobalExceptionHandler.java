@@ -77,14 +77,14 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.NOT_FOUND);
     }
 
-    @ExceptionHandler(UserNotFoundException.class)
+    @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> UserNotFoundException(
             AccountNotFoundException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
                 LocalDateTime.now(),
                 HttpStatus.NOT_FOUND.value(),
-                "USER_NOT_FOUND",
+                "INCORRECT_USERNAME_OR_PASSWORD",
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", "")
         );
