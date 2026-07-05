@@ -3,6 +3,7 @@ package dev.venkat.vault_ledger.controller;
 import dev.venkat.vault_ledger.dto.AccountDto;
 import dev.venkat.vault_ledger.dto.CreateAccountRequestDto;
 import dev.venkat.vault_ledger.service.AccountService;
+import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -15,6 +16,7 @@ import java.util.List;
 @RequestMapping("/account")
 @RequiredArgsConstructor
 @Validated
+@SecurityRequirement(name = "bearerAuth")
 public class AccountController {
 
     private final AccountService accountService;
