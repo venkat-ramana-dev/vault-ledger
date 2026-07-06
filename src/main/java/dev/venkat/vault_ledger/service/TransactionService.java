@@ -46,6 +46,17 @@ public class TransactionService implements TransactionServiceImpl {
         log.info("Deposit initiated: Account Number: {}. Amount: {}",
                 accountNumber,
                 amountDto.amount());
+
+        Account userAccount = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
+
+        Account vaultAccount = accountRepository.findByAccountNumber(VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER));
+
+        if(userAccount.getAccountStatus() == AccountStatus.CLOSED){
+            throw  new AccountClosedException("Account is closed: " + accountNumber);
+        }
+
         TransactionHeader transactionHeader = TransactionHeader.builder()
                 .transactionType(TransactionType.DEPOSIT)
                 .build();
@@ -54,8 +65,7 @@ public class TransactionService implements TransactionServiceImpl {
         TransactionEntry transactionEntryOfUser = TransactionEntry.builder()
                 .amount(amountDto.amount())
                 .entryDirection(EntryDirection.CREDIT)
-                .account(accountRepository.findByAccountNumber(accountNumber)
-                        .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber)))
+                .account(userAccount)
                 .transactionHeader(savedTransactionHeader)
                 .build();
         transactionEntryRepository.save(transactionEntryOfUser);
@@ -63,8 +73,7 @@ public class TransactionService implements TransactionServiceImpl {
         TransactionEntry transactionEntryOfVault = TransactionEntry.builder()
                 .amount(amountDto.amount())
                 .entryDirection(EntryDirection.DEBIT)
-                .account(accountRepository.findByAccountNumber(VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)
-                        .orElseThrow(() -> new AccountNotFoundException("Account not found: " + VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)))
+                .account(vaultAccount)
                 .transactionHeader(savedTransactionHeader)
                 .build();
         transactionEntryRepository.save(transactionEntryOfVault);
@@ -87,28 +96,33 @@ public class TransactionService implements TransactionServiceImpl {
         log.info("Withdrawal initiated. Account Number: {}. Amount: {}",
                 accountNumber,
                 amountDto.amount());
-        Account userAccount = accountRepository.findByAccountNumber(accountNumber)
+
+        Account userAccount = accountRepository.findByAccountNumberForUpdate(accountNumber)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
 
-        if(userAccount.getAccountStatus().equals(AccountStatus.CLOSED)){
+        Account vaultAccount = accountRepository.findByAccountNumber(VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER));
+
+        if(userAccount.getAccountStatus() == AccountStatus.CLOSED){
             throw  new AccountClosedException("Account is closed: " + accountNumber);
         }
-        if (getAccountBalance(userAccount.getId()).compareTo(amountDto.amount()) < 0){
+
+        BigDecimal balance = getAccountBalance(userAccount.getId());
+
+        if (balance.compareTo(amountDto.amount()) < 0){
             throw new InsufficientBalanceException("Insufficient Balance. Cannot withdraw amount: " + amountDto.amount()
-                    + " from balance: " + getAccountBalance(userAccount.getId()));
+                    + " from balance: " + balance);
         }
 
-
         TransactionHeader transactionHeader = TransactionHeader.builder()
-                .transactionType(TransactionType.WITHDRAWAl)
+                .transactionType(TransactionType.WITHDRAWAL)
                 .build();
         TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
 
         TransactionEntry transactionEntryOfUser = TransactionEntry.builder()
                 .amount(amountDto.amount())
                 .entryDirection(EntryDirection.DEBIT)
-                .account(accountRepository.findByAccountNumber(accountNumber)
-                        .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber)))
+                .account(userAccount)
                 .transactionHeader(savedTransactionHeader)
                 .build();
         transactionEntryRepository.save(transactionEntryOfUser);
@@ -116,8 +130,7 @@ public class TransactionService implements TransactionServiceImpl {
         TransactionEntry transactionEntryOfVault = TransactionEntry.builder()
                 .amount(amountDto.amount())
                 .entryDirection(EntryDirection.CREDIT)
-                .account(accountRepository.findByAccountNumber(VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)
-                        .orElseThrow(() -> new AccountNotFoundException("Account not found: " + VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)))
+                .account(vaultAccount)
                 .transactionHeader(savedTransactionHeader)
                 .build();
         transactionEntryRepository.save(transactionEntryOfVault);
@@ -126,8 +139,8 @@ public class TransactionService implements TransactionServiceImpl {
                 accountNumber,
                 amountDto.amount());
         return TransactionDto.builder()
-                .transactionType(TransactionType.WITHDRAWAl)
-                .entryDirection(EntryDirection.CREDIT)
+                .transactionType(TransactionType.WITHDRAWAL)
+                .entryDirection(EntryDirection.DEBIT)
                 .amount(amountDto.amount())
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -149,16 +162,25 @@ public class TransactionService implements TransactionServiceImpl {
             throw new SameAccountTransferException("Cannot transfer money to the same account: " + toAccountNumber);
         }
 
-        Account fromAccount = accountRepository.findByAccountNumber(fromAccountNumber)
-                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + fromAccountNumber));
+        Account fromAccount;
+        Account toAccount;
 
-        Account toAccount = accountRepository.findByAccountNumber(toAccountNumber)
-                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + toAccountNumber));
+        if (fromAccountNumber.compareTo(toAccountNumber) < 0) {
+            fromAccount = accountRepository.findByAccountNumberForUpdate(fromAccountNumber)
+                    .orElseThrow(() -> new AccountNotFoundException("Account not found: " + fromAccountNumber));
+            toAccount = accountRepository.findByAccountNumberForUpdate(toAccountNumber)
+                    .orElseThrow(() -> new AccountNotFoundException("Account not found: " + toAccountNumber));
+        } else {
+            toAccount = accountRepository.findByAccountNumberForUpdate(toAccountNumber)
+                    .orElseThrow(() -> new AccountNotFoundException("Account not found: " + toAccountNumber));
+            fromAccount = accountRepository.findByAccountNumberForUpdate(fromAccountNumber)
+                    .orElseThrow(() -> new AccountNotFoundException("Account not found: " + fromAccountNumber));
+        }
 
-        if (!fromAccount.getAccountStatus().equals(AccountStatus.ACTIVE)) {
+        if (fromAccount.getAccountStatus() == AccountStatus.CLOSED) {
             throw new AccountClosedException("Account is closed: " + fromAccountNumber);
         }
-        if (!toAccount.getAccountStatus().equals(AccountStatus.ACTIVE)) {
+        if (toAccount.getAccountStatus() == AccountStatus.CLOSED) {
             throw new AccountClosedException("Account is closed: " + toAccountNumber);
         }
 
@@ -191,7 +213,8 @@ public class TransactionService implements TransactionServiceImpl {
                 .build();
         transactionEntryRepository.save(transactionEntryOfToAccount);
 
-        log.info("Transfer completed successfully. Sender: {}.Receiver: {}.Amount: {}",
+        log.info("Transfer completed successfully. Header {}. Sender: {}.Receiver: {}.Amount: {}",
+                savedTransactionHeader.getId(),
                 fromAccount.getAccountHolderName(),
                 toAccount.getAccountHolderName(),
                 amountDto.amount());

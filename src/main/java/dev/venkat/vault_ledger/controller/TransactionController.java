@@ -38,7 +38,7 @@ public class TransactionController {
 
     @PutMapping("/{fromAccountNumber}/transfer")
     public ResponseEntity<TransferTransactionDto> transfer(@PathVariable String fromAccountNumber,
-                                                           @Valid @RequestBody TransferRequestDto transferRequestDto) {
+                                                           @Valid @RequestBody TransferRequestDto transferRequestDto) throws InterruptedException {
         TransferTransactionDto transferTransactionDto = transactionService.transfer(fromAccountNumber, transferRequestDto);
         return ResponseEntity.ok(transferTransactionDto);
     }

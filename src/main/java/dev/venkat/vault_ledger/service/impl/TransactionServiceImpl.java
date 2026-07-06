@@ -14,7 +14,7 @@ public interface TransactionServiceImpl {
 
     TransactionDto withdraw(String accountNumber, AmountDto amountDto);
 
-    TransferTransactionDto transfer(String accountNumber, TransferRequestDto transferRequestDto);
+    TransferTransactionDto transfer(String accountNumber, TransferRequestDto transferRequestDto) throws InterruptedException;
 
     List<TransactionDto> getTransactionHistory(String accountNumber);
 
