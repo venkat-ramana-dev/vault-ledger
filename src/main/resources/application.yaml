@@ -20,5 +20,10 @@ jwt:
     enabled: true
     locations: "classpath:db/migration"
 
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
 server:
   port: 8081
