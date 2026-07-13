@@ -16,6 +16,7 @@ import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
 import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
 import dev.venkat.vault_ledger.service.impl.AccountServiceImpl;
+import dev.venkat.vault_ledger.util.TransactionDescriptionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -79,6 +80,7 @@ public class AccountService implements AccountServiceImpl {
                     .entryDirection(EntryDirection.CREDIT)
                     .account(savedAccount)
                     .transactionHeader(savedTransactionHeader)
+                    .description(TransactionDescriptionUtil.initialDeposit())
                     .build();
             transactionEntryRepository.save(userTransactionEntry);
 
@@ -87,6 +89,7 @@ public class AccountService implements AccountServiceImpl {
                     .entryDirection(EntryDirection.DEBIT)
                     .account(vault) // USING THE VAULT OBJECT
                     .transactionHeader(savedTransactionHeader)
+                    .description(TransactionDescriptionUtil.systemVaultWithdrawal(savedAccount))
                     .build();
             transactionEntryRepository.save(vaultTransactionEntry);
         }

@@ -1,17 +1,12 @@
 package dev.venkat.vault_ledger.controller;
 
-import dev.venkat.vault_ledger.dto.AmountDto;
-import dev.venkat.vault_ledger.dto.TransactionDto;
-import dev.venkat.vault_ledger.dto.TransferRequestDto;
-import dev.venkat.vault_ledger.dto.TransferTransactionDto;
+import dev.venkat.vault_ledger.dto.*;
 import dev.venkat.vault_ledger.service.TransactionService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
 
 @RestController
 @RequestMapping("/transaction")
@@ -41,11 +36,6 @@ public class TransactionController {
                                                            @Valid @RequestBody TransferRequestDto transferRequestDto) throws InterruptedException {
         TransferTransactionDto transferTransactionDto = transactionService.transfer(fromAccountNumber, transferRequestDto);
         return ResponseEntity.ok(transferTransactionDto);
-    }
-
-    @GetMapping("/{accountNumber}/history")
-    public ResponseEntity<List<TransactionDto>> getTransactionHistory(@PathVariable String accountNumber) {
-        return ResponseEntity.ok(transactionService.getTransactionHistory(accountNumber));
     }
 
 }
