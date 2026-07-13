@@ -1,32 +1,34 @@
 package dev.venkat.vault_ledger.service;
 
 import dev.venkat.vault_ledger.bootstrap.VaultInitializer;
-import dev.venkat.vault_ledger.dto.AmountDto;
-import dev.venkat.vault_ledger.dto.TransactionDto;
-import dev.venkat.vault_ledger.dto.TransferRequestDto;
-import dev.venkat.vault_ledger.dto.TransferTransactionDto;
+import dev.venkat.vault_ledger.dto.*;
 import dev.venkat.vault_ledger.entity.Account;
 import dev.venkat.vault_ledger.entity.TransactionEntry;
 import dev.venkat.vault_ledger.entity.TransactionHeader;
 import dev.venkat.vault_ledger.enums.AccountStatus;
 import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
-import dev.venkat.vault_ledger.exception.AccountClosedException;
-import dev.venkat.vault_ledger.exception.AccountNotFoundException;
-import dev.venkat.vault_ledger.exception.InsufficientBalanceException;
-import dev.venkat.vault_ledger.exception.SameAccountTransferException;
+import dev.venkat.vault_ledger.exception.*;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
 import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
 import dev.venkat.vault_ledger.service.impl.TransactionServiceImpl;
+import dev.venkat.vault_ledger.specification.TransactionEntrySpecifications;
+import dev.venkat.vault_ledger.util.TransactionDescriptionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
@@ -38,6 +40,11 @@ public class TransactionService implements TransactionServiceImpl {
     private final TransactionHeaderRepository transactionHeaderRepository;
 
     private final TransactionEntryRepository transactionEntryRepository;
+
+    private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
+            "amount",
+            "createdAt"
+    );
 
     @Transactional
     @Override
@@ -67,6 +74,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .entryDirection(EntryDirection.CREDIT)
                 .account(userAccount)
                 .transactionHeader(savedTransactionHeader)
+                .description(TransactionDescriptionUtil.cashDeposit())
                 .build();
         transactionEntryRepository.save(transactionEntryOfUser);
 
@@ -75,6 +83,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .entryDirection(EntryDirection.DEBIT)
                 .account(vaultAccount)
                 .transactionHeader(savedTransactionHeader)
+                .description(TransactionDescriptionUtil.systemVaultWithdrawal(userAccount))
                 .build();
         transactionEntryRepository.save(transactionEntryOfVault);
 
@@ -83,7 +92,7 @@ public class TransactionService implements TransactionServiceImpl {
                 amountDto.amount());
         return TransactionDto.builder()
                 .transactionType(TransactionType.DEPOSIT)
-                .entryDirection(EntryDirection.DEBIT)
+                .entryDirection(EntryDirection.CREDIT)
                 .amount(amountDto.amount())
                 .createdAt(LocalDateTime.now())
                 .build();
@@ -124,6 +133,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .entryDirection(EntryDirection.DEBIT)
                 .account(userAccount)
                 .transactionHeader(savedTransactionHeader)
+                .description(TransactionDescriptionUtil.cashWithdrawal())
                 .build();
         transactionEntryRepository.save(transactionEntryOfUser);
 
@@ -132,6 +142,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .entryDirection(EntryDirection.CREDIT)
                 .account(vaultAccount)
                 .transactionHeader(savedTransactionHeader)
+                .description(TransactionDescriptionUtil.systemVaultDeposit(userAccount))
                 .build();
         transactionEntryRepository.save(transactionEntryOfVault);
 
@@ -202,6 +213,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .entryDirection(EntryDirection.DEBIT)
                 .account(fromAccount)
                 .transactionHeader(savedTransactionHeader)
+                .description(TransactionDescriptionUtil.transferTo(toAccount))
                 .build();
         transactionEntryRepository.save(transactionEntryOfFromAccount);
 
@@ -210,6 +222,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .entryDirection(EntryDirection.CREDIT)
                 .account(toAccount)
                 .transactionHeader(savedTransactionHeader)
+                .description(TransactionDescriptionUtil.transferFrom(fromAccount))
                 .build();
         transactionEntryRepository.save(transactionEntryOfToAccount);
 
@@ -232,28 +245,83 @@ public class TransactionService implements TransactionServiceImpl {
 
     @Transactional
     @Override
-    public List<TransactionDto> getTransactionHistory(String accountNumber) {
-        boolean accountExists = accountRepository.findByAccountNumber(accountNumber).isPresent();
-        if (!accountExists) {
-            throw new AccountNotFoundException("Account not found: " + accountNumber);
+    public BigDecimal getAccountBalance(Long accountId) {
+        return transactionEntryRepository.calculateBalanceByAccountId(accountId);
+    }
+
+    @Transactional(readOnly = true)
+    @Override
+    public Page<TransactionHistoryDto> getTransactionHistory(
+            String accountNumber,
+            LocalDateTime startDate,
+            LocalDateTime endDate,
+            BigDecimal minAmount,
+            BigDecimal maxAmount,
+            TransactionType transactionType,
+            int page,
+            int size,
+            String sortBy,
+            String sortDir) {
+        Account userAccount = accountRepository.findByAccountNumber(accountNumber)
+                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
+
+        if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
+            throw new IllegalArgumentException(
+                    "Invalid sort field. Allowed fields: " + ALLOWED_SORT_FIELDS);
         }
 
-        List<TransactionEntry> entries = transactionEntryRepository
-                .findByAccount_AccountNumberOrderByTransactionHeader_CreatedAtDesc(accountNumber);
+        Sort.Direction direction;
 
-        return entries.stream().map(entry -> TransactionDto.builder()
+        try {
+            direction = Sort.Direction.fromString(sortDir);
+        } catch (IllegalArgumentException ex) {
+            throw new IllegalArgumentException(
+                    "sortDir must be either ASC or DESC.");
+        }
+
+        Sort sort = Sort.by(direction, sortBy);
+
+        if (page < 0) {
+            throw new InvalidPageRangeException(
+                  "Page cannot be negative"
+            );
+        } else if (size <= 0 || size > 100) {
+            throw new InvalidSizeRangeException(
+                    "Size can be only from 1 to 100"
+            );
+        }
+
+        Pageable pageable = PageRequest.of(page, size, sort);
+
+        if (minAmount != null && maxAmount != null
+                && minAmount.compareTo(maxAmount) > 0) {
+            throw new InvalidAmountRangeException(
+                    "Minimum amount cannot be greater than maximum amount.");
+        }
+
+        if (startDate != null && endDate != null
+                && startDate.isAfter(endDate)) {
+            throw new InvalidDateRangeException(
+                    "Start date cannot be after end date.");
+        }
+
+        Specification<TransactionEntry> spec = Specification.allOf(
+                TransactionEntrySpecifications.belongsToAccount(userAccount),
+                TransactionEntrySpecifications.dateBetween(startDate, endDate),
+                TransactionEntrySpecifications.amountBetween(minAmount, maxAmount),
+                TransactionEntrySpecifications.transactionType(transactionType)
+        );
+
+        Page<TransactionEntry> entries = transactionEntryRepository.findAll(spec, pageable);
+
+        return entries.map(entry -> TransactionHistoryDto.builder()
                 .transactionType(entry.getTransactionHeader().getTransactionType())
                 .entryDirection(entry.getEntryDirection())
                 .amount(entry.getAmount())
+                .description(entry.getDescription())
                 .createdAt(entry.getTransactionHeader().getCreatedAt())
                 .build()
-        ).toList();
-    }
-
-    @Transactional
-    @Override
-    public BigDecimal getAccountBalance(Long accountId) {
-        return transactionEntryRepository.calculateBalanceByAccountId(accountId);
+        );
     }
 
 }

@@ -39,6 +39,9 @@ public class TransactionEntry {
     @JoinColumn(name = "header_id", nullable = false, updatable = false)
     private TransactionHeader transactionHeader;
 
+    @Column(nullable = false, length = 255)
+    private String description;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
