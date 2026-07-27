@@ -141,12 +141,22 @@ public class AccountService implements AccountServiceImpl {
         return "Account deleted successfully with Acc No : " + account.getAccountNumber();
     }
 
+
     private String generateAccountNumber() {
+        int maxRetries = 3;
+        for (int i = 0; i < maxRetries; i++) {
+            long randomNum = java.util.concurrent.ThreadLocalRandom.current().nextLong(1_000_000_000L, 10_000_000_000L);
+            String accountNumber = "ACC" + randomNum;
 
-        long timestamp = System.currentTimeMillis();
+            if (!accountRepository.existsByAccountNumber(accountNumber)) {
+                return accountNumber;
+            } else {
+                log.warn("Account number collision detected for {}. Retrying... (Attempt {}/{})",
+                        accountNumber, i + 1, maxRetries);
+            }
+        }
 
-        String randomSuffix = UUID.randomUUID().toString().substring(0, 4).toUpperCase();
-
-        return "ACC-" + timestamp + "-" + randomSuffix;
+        log.error("CRITICAL: Failed to generate a unique account number after {} attempts. Is the database full?", maxRetries);
+        throw new IllegalStateException("System busy: Could not generate a unique account number.");
     }
 }
