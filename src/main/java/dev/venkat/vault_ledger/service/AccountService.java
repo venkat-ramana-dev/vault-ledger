@@ -12,6 +12,7 @@ import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
 import dev.venkat.vault_ledger.exception.AccountNotFoundException;
 import dev.venkat.vault_ledger.mapper.AccountMapper;
+import dev.venkat.vault_ledger.projection.AccountBalanceProjection;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
 import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
@@ -23,9 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 @Service
 @RequiredArgsConstructor
@@ -116,17 +115,36 @@ public class AccountService implements AccountServiceImpl {
         return AccountMapper.mapToAccountDto(account, currentBalance);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public List<AccountDto> getAllAccounts() {
+
         List<Account> accounts = accountRepository.findAll();
-        List<AccountDto> accountDtos = new ArrayList<>();
-        for (Account account : accounts) {
-            BigDecimal balance = transactionService.getAccountBalance(account.getId());
-            AccountDto dto = AccountMapper.mapToAccountDto(account, balance);
-            accountDtos.add(dto);
+
+        if (accounts.isEmpty()) {
+            return new ArrayList<>();
         }
-        return accountDtos;
+
+        List<Long> accountIds = new ArrayList<>();
+        for (Account account : accounts) {
+            accountIds.add(account.getId());
+        }
+
+        List<AccountBalanceProjection> balances = transactionEntryRepository.calculateBalancesForAccounts(accountIds);
+
+        Map<Long, BigDecimal> balanceMap = new HashMap<>();
+        for (AccountBalanceProjection b : balances) {
+            balanceMap.put(b.getAccountId(), b.getBalance());
+        }
+
+        List<AccountDto> result = new ArrayList<>();
+        for (Account account : accounts) {
+            BigDecimal balance = balanceMap.getOrDefault(account.getId(), BigDecimal.ZERO);
+            AccountDto dto = AccountMapper.mapToAccountDto(account, balance);
+            result.add(dto);
+        }
+
+        return result;
     }
 
     @Transactional

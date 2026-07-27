@@ -1,6 +1,7 @@
 package dev.venkat.vault_ledger.repository;
 
 import dev.venkat.vault_ledger.entity.TransactionEntry;
+import dev.venkat.vault_ledger.projection.AccountBalanceProjection;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -25,4 +26,22 @@ public interface TransactionEntryRepository extends
 //    WHERE a.account_number = ?
 //    ORDER BY th.created_at DESC;
     List<TransactionEntry> findByAccount_AccountNumberOrderByTransactionHeader_CreatedAtDesc(String accountNumber);
+
+    @Query("""
+    SELECT t.account.id AS accountId,
+           COALESCE(
+               SUM(
+                   CASE
+                       WHEN t.entryDirection = 'CREDIT'
+                       THEN t.amount
+                       ELSE -t.amount
+                   END
+               ),
+               0
+           ) AS balance
+    FROM TransactionEntry t
+    WHERE t.account.id IN :accountIds
+    GROUP BY t.account.id
+    """)
+    List<AccountBalanceProjection> calculateBalancesForAccounts(@Param("accountIds") List<Long> accountIds);
 }

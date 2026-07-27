@@ -36,7 +36,6 @@ public class AccountController {
         return ResponseEntity.ok(accountDto);
     }
 
-    // Future JWT Rule: Admin Only!
     @GetMapping("/accounts")
     public ResponseEntity<List<AccountDto>> getAllAccounts() {
         List<AccountDto> accountDtos = accountService.getAllAccounts();
