@@ -11,6 +11,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Component
@@ -23,7 +24,6 @@ public class VaultInitializer implements CommandLineRunner {
 
     private final PasswordEncoder passwordEncoder;
 
-    // Define the constant so you can use it safely anywhere in your app
     public static final String SYSTEM_VAULT_ACCOUNT_NUMBER = "SYS-VAULT-0000";
 
     public VaultInitializer(AccountRepository accountRepository, UserRepository userRepository, PasswordEncoder passwordEncoder) {
@@ -39,10 +39,13 @@ public class VaultInitializer implements CommandLineRunner {
 
         if (vault.isEmpty()) {
 
+            Instant createdAt = Instant.now();
+
             User system = User.builder()
                     .username("vault-system")
                     .userRole(UserRole.SYSTEM)
                     .password(passwordEncoder.encode("systemVault123"))
+                    .createdAt(createdAt)
                     .build();
 
             userRepository.save(system);
@@ -53,6 +56,7 @@ public class VaultInitializer implements CommandLineRunner {
                     .accountHolderName("Vault Ledger System Account")
                     .accountStatus(AccountStatus.ACTIVE)
                     .user(system)
+                    .createdAt(createdAt)
                     .build();
 
             accountRepository.save(systemVault);
@@ -63,10 +67,12 @@ public class VaultInitializer implements CommandLineRunner {
 
         Optional<User> user = userRepository.findByUsername("admin");
         if (user.isEmpty()) {
+
             User admin = User.builder()
                     .username("admin")
                     .userRole(UserRole.ADMIN)
                     .password(passwordEncoder.encode("admin"))
+                    .createdAt(Instant.now())
                     .build();
             userRepository.save(admin);
             log.info("Admin created successfully.");

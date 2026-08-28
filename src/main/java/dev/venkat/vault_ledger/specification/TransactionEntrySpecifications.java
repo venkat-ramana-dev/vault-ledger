@@ -7,7 +7,7 @@ import dev.venkat.vault_ledger.enums.TransactionType;
 import jakarta.persistence.criteria.Join;
 import org.springframework.data.jpa.domain.Specification;
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public class TransactionEntrySpecifications {
 
@@ -18,7 +18,7 @@ public class TransactionEntrySpecifications {
         };
     }
 
-    public static Specification<TransactionEntry> dateBetween(LocalDateTime startDate, LocalDateTime endDate) {
+    public static Specification<TransactionEntry> dateBetween(Instant startDate, Instant endDate) {
         return (root, query, cb) -> {
             if (startDate == null && endDate == null) return cb.conjunction();
 

@@ -4,7 +4,7 @@ import dev.venkat.vault_ledger.enums.TransactionType;
 import lombok.Builder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Builder
 public record TransferTransactionDto(String fromAccountNumber,
@@ -13,5 +13,5 @@ public record TransferTransactionDto(String fromAccountNumber,
                                      String toAccountNumber,
                                      String toAccountHolderName,
                                      BigDecimal amount,
-                                     LocalDateTime createdAt) {
+                                     Instant createdAt) {
 }

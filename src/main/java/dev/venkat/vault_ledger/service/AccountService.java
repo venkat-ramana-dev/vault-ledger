@@ -24,6 +24,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -53,6 +54,7 @@ public class AccountService implements AccountServiceImpl {
                 .accountHolderName(accountHolderName)
                 .accountStatus(AccountStatus.ACTIVE)
                 .user(user)
+                .createdAt(user.getCreatedAt())
                 .build();
 
         Account savedAccount = accountRepository.save(account);
@@ -68,8 +70,11 @@ public class AccountService implements AccountServiceImpl {
                     .orElseThrow(() -> new AccountNotFoundException("System error: Vault account not found. AccountNumber: " +
                             VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER));
 
+            Instant createdAt = Instant.now();
+
             TransactionHeader transactionHeader = TransactionHeader.builder()
                     .transactionType(TransactionType.INITIAL_DEPOSIT)
+                    .createdAt(createdAt)
                     .build();
 
             TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
@@ -80,6 +85,7 @@ public class AccountService implements AccountServiceImpl {
                     .account(savedAccount)
                     .transactionHeader(savedTransactionHeader)
                     .description(TransactionDescriptionUtil.initialDeposit())
+                    .createdAt(createdAt)
                     .build();
             transactionEntryRepository.save(userTransactionEntry);
 
@@ -89,6 +95,7 @@ public class AccountService implements AccountServiceImpl {
                     .account(vault) // USING THE VAULT OBJECT
                     .transactionHeader(savedTransactionHeader)
                     .description(TransactionDescriptionUtil.systemVaultWithdrawal(savedAccount))
+                    .createdAt(createdAt)
                     .build();
             transactionEntryRepository.save(vaultTransactionEntry);
         }

@@ -26,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -64,8 +65,11 @@ public class TransactionService implements TransactionServiceImpl {
             throw  new AccountClosedException("Account is closed: " + accountNumber);
         }
 
+        Instant createdAt = Instant.now();
+
         TransactionHeader transactionHeader = TransactionHeader.builder()
                 .transactionType(TransactionType.DEPOSIT)
+                .createdAt(createdAt)
                 .build();
         TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
 
@@ -75,6 +79,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .account(userAccount)
                 .transactionHeader(savedTransactionHeader)
                 .description(TransactionDescriptionUtil.cashDeposit())
+                .createdAt(createdAt)
                 .build();
         transactionEntryRepository.save(transactionEntryOfUser);
 
@@ -84,6 +89,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .account(vaultAccount)
                 .transactionHeader(savedTransactionHeader)
                 .description(TransactionDescriptionUtil.systemVaultWithdrawal(userAccount))
+                .createdAt(createdAt)
                 .build();
         transactionEntryRepository.save(transactionEntryOfVault);
 
@@ -94,7 +100,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .transactionType(TransactionType.DEPOSIT)
                 .entryDirection(EntryDirection.CREDIT)
                 .amount(amountDto.amount())
-                .createdAt(LocalDateTime.now())
+                .createdAt(createdAt)
                 .build();
     }
 
@@ -123,8 +129,11 @@ public class TransactionService implements TransactionServiceImpl {
                     + " from balance: " + balance);
         }
 
+        Instant createdAt = Instant.now();
+
         TransactionHeader transactionHeader = TransactionHeader.builder()
                 .transactionType(TransactionType.WITHDRAWAL)
+                .createdAt(createdAt)
                 .build();
         TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
 
@@ -134,6 +143,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .account(userAccount)
                 .transactionHeader(savedTransactionHeader)
                 .description(TransactionDescriptionUtil.cashWithdrawal())
+                .createdAt(createdAt)
                 .build();
         transactionEntryRepository.save(transactionEntryOfUser);
 
@@ -143,6 +153,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .account(vaultAccount)
                 .transactionHeader(savedTransactionHeader)
                 .description(TransactionDescriptionUtil.systemVaultDeposit(userAccount))
+                .createdAt(createdAt)
                 .build();
         transactionEntryRepository.save(transactionEntryOfVault);
 
@@ -153,7 +164,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .transactionType(TransactionType.WITHDRAWAL)
                 .entryDirection(EntryDirection.DEBIT)
                 .amount(amountDto.amount())
-                .createdAt(LocalDateTime.now())
+                .createdAt(createdAt)
                 .build();
 
     }
@@ -202,9 +213,12 @@ public class TransactionService implements TransactionServiceImpl {
                                             " Balance: " + fromAccountBalance);
         }
 
+        Instant createdAt = Instant.now();
+
 
         TransactionHeader transactionHeader = TransactionHeader.builder()
                 .transactionType(TransactionType.TRANSFER)
+                .createdAt(createdAt)
                 .build();
         TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
 
@@ -214,6 +228,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .account(fromAccount)
                 .transactionHeader(savedTransactionHeader)
                 .description(TransactionDescriptionUtil.transferTo(toAccount))
+                .createdAt(createdAt)
                 .build();
         transactionEntryRepository.save(transactionEntryOfFromAccount);
 
@@ -223,6 +238,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .account(toAccount)
                 .transactionHeader(savedTransactionHeader)
                 .description(TransactionDescriptionUtil.transferFrom(fromAccount))
+                .createdAt(createdAt)
                 .build();
         transactionEntryRepository.save(transactionEntryOfToAccount);
 
@@ -239,7 +255,7 @@ public class TransactionService implements TransactionServiceImpl {
                 .toAccountNumber(toAccountNumber)
                 .toAccountHolderName(toAccount.getAccountHolderName())
                 .amount(amountDto.amount())
-                .createdAt(LocalDateTime.now())
+                .createdAt(createdAt)
                 .build();
     }
 
@@ -253,8 +269,8 @@ public class TransactionService implements TransactionServiceImpl {
     @Override
     public Page<TransactionHistoryDto> getTransactionHistory(
             String accountNumber,
-            LocalDateTime startDate,
-            LocalDateTime endDate,
+            Instant startDate,
+            Instant endDate,
             BigDecimal minAmount,
             BigDecimal maxAmount,
             TransactionType transactionType,

@@ -3,7 +3,7 @@ spring:
     name: vault-ledger
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/vault_ledger
+    url: jdbc:postgresql://localhost:5433/vault_ledger
     username: postgres
     password: postgres
 
