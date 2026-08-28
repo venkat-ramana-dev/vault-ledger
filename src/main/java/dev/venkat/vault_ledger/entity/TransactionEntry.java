@@ -29,7 +29,7 @@ public class TransactionEntry {
     @Column(name = "entry_direction", nullable = false, updatable = false)
     private EntryDirection entryDirection;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false, updatable = false)
     private Account account;
 

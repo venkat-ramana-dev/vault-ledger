@@ -2,6 +2,10 @@ package dev.venkat.vault_ledger.repository;
 
 import dev.venkat.vault_ledger.entity.TransactionEntry;
 import dev.venkat.vault_ledger.projection.AccountBalanceProjection;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.domain.Specification;
+import org.springframework.data.jpa.repository.EntityGraph;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.JpaSpecificationExecutor;
 import org.springframework.data.jpa.repository.Query;
@@ -20,12 +24,11 @@ public interface TransactionEntryRepository extends
             "FROM TransactionEntry t WHERE t.account.id = :accountId")
     BigDecimal calculateBalanceByAccountId(@Param("accountId") Long accountId);
 
-//    SELECT te.* FROM transaction_entries te
-//    JOIN accounts a ON te.account_id = a.id
-//    JOIN transaction_headers th ON te.header_id = th.id
-//    WHERE a.account_number = ?
-//    ORDER BY th.created_at DESC;
-    List<TransactionEntry> findByAccount_AccountNumberOrderByTransactionHeader_CreatedAtDesc(String accountNumber);
+    @EntityGraph(attributePaths = "transactionHeader")
+    Page<TransactionEntry> findAll(
+            Specification<TransactionEntry> spec,
+            Pageable pageable
+    );
 
     @Query("""
     SELECT t.account.id AS accountId,
