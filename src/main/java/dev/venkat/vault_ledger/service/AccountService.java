@@ -10,6 +10,8 @@ import dev.venkat.vault_ledger.entity.User;
 import dev.venkat.vault_ledger.enums.AccountStatus;
 import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
+import dev.venkat.vault_ledger.exception.AccountClosedException;
+import dev.venkat.vault_ledger.exception.AccountClosureException;
 import dev.venkat.vault_ledger.exception.AccountNotFoundException;
 import dev.venkat.vault_ledger.mapper.AccountMapper;
 import dev.venkat.vault_ledger.projection.AccountBalanceProjection;
@@ -156,10 +158,21 @@ public class AccountService implements AccountServiceImpl {
 
     @Transactional
     @Override
-    public String deleteAccount(String accountNumber) {
+    public String closeAccount(String accountNumber) {
         log.info("Closing account. {}",accountNumber);
-        Account account = accountRepository.findByAccountNumber(accountNumber)
+        Account account = accountRepository.findByAccountNumberForUpdate(accountNumber)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
+
+        if (account.getAccountStatus() == AccountStatus.CLOSED) {
+            throw new AccountClosedException("Account is already closed: " + accountNumber);
+        }
+
+        BigDecimal balance = transactionService.getAccountBalance(account.getId());
+
+        if (balance.compareTo(BigDecimal.ZERO) != 0) {
+            throw new AccountClosureException("Account cannot be closed because its balance is not zero. Current balance: " + balance);
+        }
+
         account.setAccountStatus(AccountStatus.CLOSED);
         accountRepository.save(account);
         log.info("Account closed successfully. {}",accountNumber);

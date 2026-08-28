@@ -8,6 +8,8 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
+
+import java.time.Instant;
 import java.time.LocalDateTime;
 
 @RestControllerAdvice
@@ -19,7 +21,7 @@ public class GlobalExceptionHandler {
             Exception ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "INTERNAL_SERVER_ERROR",
                 ex.getMessage(),
@@ -34,7 +36,7 @@ public class GlobalExceptionHandler {
             InsufficientBalanceException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 "INSUFFICIENT_FUNDS",
                 ex.getMessage(),
@@ -50,7 +52,7 @@ public class GlobalExceptionHandler {
             AccountNotFoundException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 HttpStatus.NOT_FOUND.value(),
                 "ACCOUNT_NOT_FOUND",
                 ex.getMessage(),
@@ -66,7 +68,7 @@ public class GlobalExceptionHandler {
             AccountClosedException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 HttpStatus.CONFLICT.value(),
                 "ACCOUNT_CLOSED",
                 ex.getMessage(),
@@ -77,12 +79,29 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(error, HttpStatus.CONFLICT);
     }
 
+    @ExceptionHandler(AccountClosureException.class)
+    public ResponseEntity<ErrorResponse> handleAccountClosure(
+            AccountClosureException ex, WebRequest request) {
+
+        ErrorResponse error = new ErrorResponse(
+                Instant.now(),
+                HttpStatus.CONFLICT.value(),
+                "BALANCE_IS_NOT_ZERO",
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", "")
+        );
+
+        log.warn(ex.getMessage());
+
+        return new ResponseEntity<>(error, HttpStatus.CONFLICT);
+    }
+
     @ExceptionHandler(InvalidCredentialsException.class)
     public ResponseEntity<ErrorResponse> handleInvalidCredentials(
             InvalidCredentialsException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 HttpStatus.NOT_FOUND.value(),
                 "INCORRECT_USERNAME_OR_PASSWORD",
                 ex.getMessage(),
@@ -98,7 +117,7 @@ public class GlobalExceptionHandler {
             SameAccountTransferException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 HttpStatus.NOT_FOUND.value(),
                 "SAME_ACCOUNT_TRANSFER",
                 ex.getMessage(),
@@ -114,7 +133,7 @@ public class GlobalExceptionHandler {
             InvalidAmountRangeException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 HttpStatus.NOT_FOUND.value(),
                 "MINIMUM_AMOUNT_GREATER_THAN_MAXIMUM_AMOUNT",
                 ex.getMessage(),
@@ -130,7 +149,7 @@ public class GlobalExceptionHandler {
             InvalidDateRangeException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 HttpStatus.NOT_FOUND.value(),
                 "START_DATE_IS_AFTER_END_DATE",
                 ex.getMessage(),
@@ -146,7 +165,7 @@ public class GlobalExceptionHandler {
             InvalidSizeRangeException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 HttpStatus.NOT_FOUND.value(),
                 "INVALID_SIZE_RANGE",
                 ex.getMessage(),
@@ -162,7 +181,7 @@ public class GlobalExceptionHandler {
             InvalidPageRangeException ex, WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 HttpStatus.NOT_FOUND.value(),
                 "INVALID_PAGE_RANGE",
                 ex.getMessage(),
@@ -186,7 +205,7 @@ public class GlobalExceptionHandler {
                 .orElse("Validation failed.");
 
         ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 "VALIDATION_ERROR",
                 message,
@@ -204,7 +223,7 @@ public class GlobalExceptionHandler {
             WebRequest request) {
 
         ErrorResponse error = new ErrorResponse(
-                LocalDateTime.now(),
+                Instant.now(),
                 HttpStatus.BAD_REQUEST.value(),
                 "VALIDATION_ERROR",
                 ex.getMessage(),
