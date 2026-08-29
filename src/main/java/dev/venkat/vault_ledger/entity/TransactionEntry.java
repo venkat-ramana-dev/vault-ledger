@@ -33,7 +33,7 @@ public class TransactionEntry {
     @JoinColumn(name = "account_id", nullable = false, updatable = false)
     private Account account;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "header_id", nullable = false, updatable = false)
     private TransactionHeader transactionHeader;
 

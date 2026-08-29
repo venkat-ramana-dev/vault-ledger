@@ -13,7 +13,6 @@ import dev.venkat.vault_ledger.projection.AccountBalanceProjection;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
 import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
-import dev.venkat.vault_ledger.service.impl.TransactionServiceImpl;
 import dev.venkat.vault_ledger.specification.TransactionEntrySpecifications;
 import dev.venkat.vault_ledger.util.TransactionDescriptionUtil;
 import lombok.RequiredArgsConstructor;
@@ -34,7 +33,7 @@ import java.util.Set;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class TransactionService implements TransactionServiceImpl {
+public class TransactionService {
 
     private final AccountRepository accountRepository;
 
@@ -48,7 +47,6 @@ public class TransactionService implements TransactionServiceImpl {
     );
 
     @Transactional
-    @Override
     public TransactionDto deposit(String accountNumber, AmountDto amountDto) {
 
         log.info("Deposit initiated: Account Number: {}. Amount: {}",
@@ -85,7 +83,6 @@ public class TransactionService implements TransactionServiceImpl {
     }
 
     @Transactional
-    @Override
     public TransactionDto withdraw(String accountNumber, AmountDto amountDto) {
 
         log.info("Withdrawal initiated. Account Number: {}. Amount: {}",
@@ -131,7 +128,6 @@ public class TransactionService implements TransactionServiceImpl {
     }
 
     @Transactional
-    @Override
     public TransferTransactionDto transfer(String fromAccountNumber, TransferRequestDto transferRequestDto) {
 
         log.info("Transfer initiated. From Account Number: {}. To Account Number: {}. Amount: {}",
@@ -200,7 +196,6 @@ public class TransactionService implements TransactionServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    @Override
     public BigDecimal getAccountBalance(Long accountId) {
         return transactionEntryRepository.calculateBalanceByAccountId(accountId);
     }
@@ -254,7 +249,6 @@ public class TransactionService implements TransactionServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    @Override
     public Page<TransactionHistoryDto> getTransactionHistory(
             String accountNumber,
             Instant startDate,

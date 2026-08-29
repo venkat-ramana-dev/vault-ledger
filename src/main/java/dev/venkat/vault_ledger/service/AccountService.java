@@ -4,11 +4,8 @@ import dev.venkat.vault_ledger.bootstrap.VaultInitializer;
 import dev.venkat.vault_ledger.dto.AccountDto;
 import dev.venkat.vault_ledger.dto.CreateAccountRequestDto;
 import dev.venkat.vault_ledger.entity.Account;
-import dev.venkat.vault_ledger.entity.TransactionEntry;
-import dev.venkat.vault_ledger.entity.TransactionHeader;
 import dev.venkat.vault_ledger.entity.User;
 import dev.venkat.vault_ledger.enums.AccountStatus;
-import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
 import dev.venkat.vault_ledger.exception.AccountClosedException;
 import dev.venkat.vault_ledger.exception.AccountClosureException;
@@ -16,9 +13,6 @@ import dev.venkat.vault_ledger.exception.AccountNotFoundException;
 import dev.venkat.vault_ledger.mapper.AccountMapper;
 import dev.venkat.vault_ledger.projection.AccountBalanceProjection;
 import dev.venkat.vault_ledger.repository.AccountRepository;
-import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
-import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
-import dev.venkat.vault_ledger.service.impl.AccountServiceImpl;
 import dev.venkat.vault_ledger.util.TransactionDescriptionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,14 +26,13 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AccountService implements AccountServiceImpl {
+public class AccountService {
 
     private final AccountRepository accountRepository;
 
     private final TransactionService transactionService;
 
     @Transactional
-    @Override
     public AccountDto createAccount(User user, CreateAccountRequestDto createAccountRequestDto) {
 
         log.info("Creating new account for {}",
@@ -83,7 +76,6 @@ public class AccountService implements AccountServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    @Override
     public AccountDto getAccountDetails(String accountNumber) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
@@ -92,7 +84,6 @@ public class AccountService implements AccountServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    @Override
     public AccountDto getAccountDetails(User user) {
         Account account = accountRepository.findByUser(user)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found for username: " + user.getUsername()));
@@ -101,7 +92,6 @@ public class AccountService implements AccountServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    @Override
     public List<AccountDto> getAllAccounts() {
 
         List<Account> accounts = accountRepository.findAll();
@@ -133,7 +123,6 @@ public class AccountService implements AccountServiceImpl {
     }
 
     @Transactional
-    @Override
     public String closeAccount(String accountNumber) {
         log.info("Closing account. {}",accountNumber);
         Account account = accountRepository.findByAccountNumberForUpdate(accountNumber)
