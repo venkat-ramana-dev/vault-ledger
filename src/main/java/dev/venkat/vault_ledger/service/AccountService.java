@@ -106,7 +106,7 @@ public class AccountService implements AccountServiceImpl {
         return AccountMapper.mapToAccountDto(savedAccount, startingBalance);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public AccountDto getAccountDetails(String accountNumber) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
@@ -115,7 +115,7 @@ public class AccountService implements AccountServiceImpl {
         return AccountMapper.mapToAccountDto(account, currentBalance);
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public AccountDto getAccountDetails(User user) {
         Account account = accountRepository.findByUser(user)
@@ -139,7 +139,7 @@ public class AccountService implements AccountServiceImpl {
             accountIds.add(account.getId());
         }
 
-        List<AccountBalanceProjection> balances = transactionEntryRepository.calculateBalancesForAccounts(accountIds);
+        List<AccountBalanceProjection> balances = transactionService.getAccountBalances(accountIds);
 
         Map<Long, BigDecimal> balanceMap = new HashMap<>();
         for (AccountBalanceProjection b : balances) {

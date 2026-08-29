@@ -37,7 +37,7 @@ public class TransactionEntry {
     @JoinColumn(name = "header_id", nullable = false, updatable = false)
     private TransactionHeader transactionHeader;
 
-    @Column(nullable = false, length = 255)
+    @Column(nullable = false, updatable = false, length = 255)
     private String description;
 
     @Column(name = "created_at", nullable = false, updatable = false)

@@ -9,6 +9,7 @@ import dev.venkat.vault_ledger.enums.AccountStatus;
 import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
 import dev.venkat.vault_ledger.exception.*;
+import dev.venkat.vault_ledger.projection.AccountBalanceProjection;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
 import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
@@ -27,6 +28,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -257,10 +259,15 @@ public class TransactionService implements TransactionServiceImpl {
                 .build();
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     @Override
     public BigDecimal getAccountBalance(Long accountId) {
         return transactionEntryRepository.calculateBalanceByAccountId(accountId);
+    }
+
+    @Transactional(readOnly = true)
+    public List<AccountBalanceProjection> getAccountBalances(List<Long> accountIds) {
+        return transactionEntryRepository.calculateBalancesForAccounts(accountIds);
     }
 
     @Transactional(readOnly = true)
