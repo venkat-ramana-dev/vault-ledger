@@ -36,10 +36,6 @@ public class AccountService implements AccountServiceImpl {
 
     private final AccountRepository accountRepository;
 
-    private final TransactionHeaderRepository transactionHeaderRepository;
-
-    private final TransactionEntryRepository transactionEntryRepository;
-
     private final TransactionService transactionService;
 
     @Transactional
@@ -72,34 +68,14 @@ public class AccountService implements AccountServiceImpl {
                     .orElseThrow(() -> new AccountNotFoundException("System error: Vault account not found. AccountNumber: " +
                             VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER));
 
-            Instant createdAt = Instant.now();
-
-            TransactionHeader transactionHeader = TransactionHeader.builder()
-                    .transactionType(TransactionType.INITIAL_DEPOSIT)
-                    .createdAt(createdAt)
-                    .build();
-
-            TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
-
-            TransactionEntry userTransactionEntry = TransactionEntry.builder()
-                    .amount(createAccountRequestDto.initialDeposit())
-                    .entryDirection(EntryDirection.CREDIT)
-                    .account(savedAccount)
-                    .transactionHeader(savedTransactionHeader)
-                    .description(TransactionDescriptionUtil.initialDeposit())
-                    .createdAt(createdAt)
-                    .build();
-            transactionEntryRepository.save(userTransactionEntry);
-
-            TransactionEntry vaultTransactionEntry = TransactionEntry.builder()
-                    .amount(createAccountRequestDto.initialDeposit())
-                    .entryDirection(EntryDirection.DEBIT)
-                    .account(vault) // USING THE VAULT OBJECT
-                    .transactionHeader(savedTransactionHeader)
-                    .description(TransactionDescriptionUtil.systemVaultWithdrawal(savedAccount))
-                    .createdAt(createdAt)
-                    .build();
-            transactionEntryRepository.save(vaultTransactionEntry);
+            transactionService.createDoubleEntryTransaction(
+                    TransactionType.INITIAL_DEPOSIT,
+                    createAccountRequestDto.initialDeposit(),
+                    vault,
+                    TransactionDescriptionUtil.systemVaultWithdrawal(savedAccount),
+                    savedAccount,
+                    TransactionDescriptionUtil.initialDeposit()
+            );
         }
         BigDecimal startingBalance = createAccountRequestDto.initialDeposit();
         log.info("Initial deposit is processed.");
@@ -176,7 +152,7 @@ public class AccountService implements AccountServiceImpl {
         account.setAccountStatus(AccountStatus.CLOSED);
         accountRepository.save(account);
         log.info("Account closed successfully. {}",accountNumber);
-        return "Account deleted successfully with Acc No : " + account.getAccountNumber();
+        return "Account closed successfully with Acc No : " + account.getAccountNumber();
     }
 
 
