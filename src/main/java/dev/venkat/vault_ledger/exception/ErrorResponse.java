@@ -1,9 +1,9 @@
 package dev.venkat.vault_ledger.exception;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 public record ErrorResponse(
-        LocalDateTime timestamp,
+        Instant timestamp,
         int status,
         String error,
         String message,

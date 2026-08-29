@@ -3,10 +3,8 @@ package dev.venkat.vault_ledger.entity;
 import dev.venkat.vault_ledger.enums.AccountStatus;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
-import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "accounts")
@@ -33,9 +31,8 @@ public class Account {
     @Column(nullable = false)
     private AccountStatus accountStatus;
 
-    @CreationTimestamp
     @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
+    private Instant createdAt;
 
     @OneToOne
     @JoinColumn(name = "user_id", nullable = false, updatable = false, unique = true)

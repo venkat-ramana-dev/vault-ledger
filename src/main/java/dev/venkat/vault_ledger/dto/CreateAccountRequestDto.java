@@ -4,7 +4,6 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.PositiveOrZero;
 import jakarta.validation.constraints.Size;
 import lombok.Builder;
-import org.springframework.web.bind.annotation.PathVariable;
 
 import java.math.BigDecimal;
 

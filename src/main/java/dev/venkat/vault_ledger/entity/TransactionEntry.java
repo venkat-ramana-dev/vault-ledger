@@ -1,13 +1,11 @@
 package dev.venkat.vault_ledger.entity;
 
 import dev.venkat.vault_ledger.enums.EntryDirection;
-import dev.venkat.vault_ledger.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "transaction_entries")
@@ -31,7 +29,7 @@ public class TransactionEntry {
     @Column(name = "entry_direction", nullable = false, updatable = false)
     private EntryDirection entryDirection;
 
-    @ManyToOne
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "account_id", nullable = false, updatable = false)
     private Account account;
 
@@ -42,9 +40,8 @@ public class TransactionEntry {
     @Column(nullable = false, length = 255)
     private String description;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 
 }
 

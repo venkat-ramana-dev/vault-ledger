@@ -1,13 +1,11 @@
 package dev.venkat.vault_ledger.controller;
 
 import dev.venkat.vault_ledger.dto.AccountDto;
-import dev.venkat.vault_ledger.dto.CreateAccountRequestDto;
 import dev.venkat.vault_ledger.dto.TransactionHistoryDto;
 import dev.venkat.vault_ledger.enums.TransactionType;
 import dev.venkat.vault_ledger.service.AccountService;
 import dev.venkat.vault_ledger.service.TransactionService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -16,7 +14,7 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @RestController
@@ -42,16 +40,16 @@ public class AccountController {
         return ResponseEntity.ok(accountDtos);
     }
 
-    @DeleteMapping("/{accountNumber}/delete")
-    public String deleteAccount(@PathVariable String accountNumber) {
-        return accountService.deleteAccount(accountNumber);
+    @PatchMapping("/{accountNumber}/close")
+    public String closeAccount(@PathVariable String accountNumber) {
+        return accountService.closeAccount(accountNumber);
     }
 
     @GetMapping("/{accountNumber}/transactions")
     public ResponseEntity<Page<TransactionHistoryDto>> getTransactionHistory(
             @PathVariable String accountNumber,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime endDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant endDate,
             @RequestParam(required = false) BigDecimal minAmount,
             @RequestParam(required = false) BigDecimal maxAmount,
             @RequestParam(required = false) TransactionType transactionType,

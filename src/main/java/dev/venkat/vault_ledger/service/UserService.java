@@ -12,6 +12,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Instant;
 import java.util.Optional;
 
 @Slf4j
@@ -33,10 +34,13 @@ public class UserService implements UserServiceImpl {
             throw new IllegalArgumentException("Username already exist.");
         }
 
+        Instant createdAt = Instant.now();
+
         User newUser = User.builder()
                 .username(username)
                 .password(passwordEncoder.encode(password))
                 .userRole(UserRole.USER)
+                .createdAt(createdAt)
                 .build();
         userRepository.save(newUser);
         log.info("New user created.");

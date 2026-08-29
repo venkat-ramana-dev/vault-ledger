@@ -3,9 +3,8 @@ package dev.venkat.vault_ledger.entity;
 import dev.venkat.vault_ledger.enums.TransactionType;
 import jakarta.persistence.*;
 import lombok.*;
-import org.hibernate.annotations.CreationTimestamp;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Entity
 @Table(name = "transaction_headers")
@@ -26,7 +25,6 @@ public class TransactionHeader {
     @Column(name = "transaction_type", nullable = false, updatable = false)
     private TransactionType transactionType;
 
-    @CreationTimestamp
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private Instant createdAt;
 }

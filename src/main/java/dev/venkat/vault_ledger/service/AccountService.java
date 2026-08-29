@@ -10,6 +10,8 @@ import dev.venkat.vault_ledger.entity.User;
 import dev.venkat.vault_ledger.enums.AccountStatus;
 import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
+import dev.venkat.vault_ledger.exception.AccountClosedException;
+import dev.venkat.vault_ledger.exception.AccountClosureException;
 import dev.venkat.vault_ledger.exception.AccountNotFoundException;
 import dev.venkat.vault_ledger.mapper.AccountMapper;
 import dev.venkat.vault_ledger.projection.AccountBalanceProjection;
@@ -24,6 +26,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.time.Instant;
 import java.util.*;
 
 @Service
@@ -53,6 +56,7 @@ public class AccountService implements AccountServiceImpl {
                 .accountHolderName(accountHolderName)
                 .accountStatus(AccountStatus.ACTIVE)
                 .user(user)
+                .createdAt(user.getCreatedAt())
                 .build();
 
         Account savedAccount = accountRepository.save(account);
@@ -68,8 +72,11 @@ public class AccountService implements AccountServiceImpl {
                     .orElseThrow(() -> new AccountNotFoundException("System error: Vault account not found. AccountNumber: " +
                             VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER));
 
+            Instant createdAt = Instant.now();
+
             TransactionHeader transactionHeader = TransactionHeader.builder()
                     .transactionType(TransactionType.INITIAL_DEPOSIT)
+                    .createdAt(createdAt)
                     .build();
 
             TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
@@ -80,6 +87,7 @@ public class AccountService implements AccountServiceImpl {
                     .account(savedAccount)
                     .transactionHeader(savedTransactionHeader)
                     .description(TransactionDescriptionUtil.initialDeposit())
+                    .createdAt(createdAt)
                     .build();
             transactionEntryRepository.save(userTransactionEntry);
 
@@ -89,6 +97,7 @@ public class AccountService implements AccountServiceImpl {
                     .account(vault) // USING THE VAULT OBJECT
                     .transactionHeader(savedTransactionHeader)
                     .description(TransactionDescriptionUtil.systemVaultWithdrawal(savedAccount))
+                    .createdAt(createdAt)
                     .build();
             transactionEntryRepository.save(vaultTransactionEntry);
         }
@@ -149,10 +158,21 @@ public class AccountService implements AccountServiceImpl {
 
     @Transactional
     @Override
-    public String deleteAccount(String accountNumber) {
+    public String closeAccount(String accountNumber) {
         log.info("Closing account. {}",accountNumber);
-        Account account = accountRepository.findByAccountNumber(accountNumber)
+        Account account = accountRepository.findByAccountNumberForUpdate(accountNumber)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
+
+        if (account.getAccountStatus() == AccountStatus.CLOSED) {
+            throw new AccountClosedException("Account is already closed: " + accountNumber);
+        }
+
+        BigDecimal balance = transactionService.getAccountBalance(account.getId());
+
+        if (balance.compareTo(BigDecimal.ZERO) != 0) {
+            throw new AccountClosureException("Account cannot be closed because its balance is not zero. Current balance: " + balance);
+        }
+
         account.setAccountStatus(AccountStatus.CLOSED);
         accountRepository.save(account);
         log.info("Account closed successfully. {}",accountNumber);

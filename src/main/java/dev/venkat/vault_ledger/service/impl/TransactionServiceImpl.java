@@ -5,8 +5,7 @@ import dev.venkat.vault_ledger.enums.TransactionType;
 import org.springframework.data.domain.Page;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.List;
+import java.time.Instant;
 
 public interface TransactionServiceImpl {
 
@@ -20,8 +19,8 @@ public interface TransactionServiceImpl {
 
     Page<TransactionHistoryDto> getTransactionHistory(
             String accountNumber,
-            LocalDateTime startDate,
-            LocalDateTime endDate,
+            Instant startDate,
+            Instant endDate,
             BigDecimal minAmount,
             BigDecimal maxAmount,
             TransactionType transactionType,
