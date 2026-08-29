@@ -8,7 +8,6 @@ import java.math.BigDecimal;
 
 public record AmountDto(
 
-        @PathVariable
         @NotNull(message = "Amount cannot be null.")
         @Positive(message = "Amount must be greater than zero.")
         BigDecimal amount) {
