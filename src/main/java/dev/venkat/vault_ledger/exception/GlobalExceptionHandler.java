@@ -10,7 +10,6 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.context.request.WebRequest;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
 
 @RestControllerAdvice
 @Slf4j
@@ -24,7 +23,7 @@ public class GlobalExceptionHandler {
                 Instant.now(),
                 HttpStatus.INTERNAL_SERVER_ERROR.value(),
                 "INTERNAL_SERVER_ERROR",
-                ex.getMessage(),
+                "An unexpected error occurred.",
                 request.getDescription(false).replace("uri=", "")
         );
         log.error("Unhandled exception occurred", ex);
@@ -102,7 +101,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = new ErrorResponse(
                 Instant.now(),
-                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.UNAUTHORIZED.value(),
                 "INCORRECT_USERNAME_OR_PASSWORD",
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", "")
@@ -118,7 +117,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = new ErrorResponse(
                 Instant.now(),
-                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.BAD_REQUEST.value(),
                 "SAME_ACCOUNT_TRANSFER",
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", "")
@@ -134,7 +133,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = new ErrorResponse(
                 Instant.now(),
-                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.BAD_REQUEST.value(),
                 "MINIMUM_AMOUNT_GREATER_THAN_MAXIMUM_AMOUNT",
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", "")
@@ -150,7 +149,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = new ErrorResponse(
                 Instant.now(),
-                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.BAD_REQUEST.value(),
                 "START_DATE_IS_AFTER_END_DATE",
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", "")
@@ -166,7 +165,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = new ErrorResponse(
                 Instant.now(),
-                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.BAD_REQUEST.value(),
                 "INVALID_SIZE_RANGE",
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", "")
@@ -182,7 +181,7 @@ public class GlobalExceptionHandler {
 
         ErrorResponse error = new ErrorResponse(
                 Instant.now(),
-                HttpStatus.NOT_FOUND.value(),
+                HttpStatus.BAD_REQUEST.value(),
                 "INVALID_PAGE_RANGE",
                 ex.getMessage(),
                 request.getDescription(false).replace("uri=", "")
@@ -231,6 +230,24 @@ public class GlobalExceptionHandler {
         );
 
         log.warn("Constraint validation failed: {}", ex.getMessage());
+        return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler(IllegalArgumentException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
+            IllegalArgumentException ex,
+            WebRequest request) {
+
+        ErrorResponse error = new ErrorResponse(
+                Instant.now(),
+                HttpStatus.BAD_REQUEST.value(),
+                "INVALID_ARGUMENT",
+                ex.getMessage(),
+                request.getDescription(false).replace("uri=", "")
+        );
+
+        log.warn(ex.getMessage());
+
         return new ResponseEntity<>(error, HttpStatus.BAD_REQUEST);
     }
 }
