@@ -9,10 +9,10 @@ import dev.venkat.vault_ledger.enums.AccountStatus;
 import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
 import dev.venkat.vault_ledger.exception.*;
+import dev.venkat.vault_ledger.projection.AccountBalanceProjection;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
 import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
-import dev.venkat.vault_ledger.service.impl.TransactionServiceImpl;
 import dev.venkat.vault_ledger.specification.TransactionEntrySpecifications;
 import dev.venkat.vault_ledger.util.TransactionDescriptionUtil;
 import lombok.RequiredArgsConstructor;
@@ -27,12 +27,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.List;
 import java.util.Set;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class TransactionService implements TransactionServiceImpl {
+public class TransactionService {
 
     private final AccountRepository accountRepository;
 
@@ -46,7 +47,6 @@ public class TransactionService implements TransactionServiceImpl {
     );
 
     @Transactional
-    @Override
     public TransactionDto deposit(String accountNumber, AmountDto amountDto) {
 
         log.info("Deposit initiated: Account Number: {}. Amount: {}",
@@ -63,33 +63,13 @@ public class TransactionService implements TransactionServiceImpl {
             throw  new AccountClosedException("Account is closed: " + accountNumber);
         }
 
-        Instant createdAt = Instant.now();
-
-        TransactionHeader transactionHeader = TransactionHeader.builder()
-                .transactionType(TransactionType.DEPOSIT)
-                .createdAt(createdAt)
-                .build();
-        TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
-
-        TransactionEntry transactionEntryOfUser = TransactionEntry.builder()
-                .amount(amountDto.amount())
-                .entryDirection(EntryDirection.CREDIT)
-                .account(userAccount)
-                .transactionHeader(savedTransactionHeader)
-                .description(TransactionDescriptionUtil.cashDeposit())
-                .createdAt(createdAt)
-                .build();
-        transactionEntryRepository.save(transactionEntryOfUser);
-
-        TransactionEntry transactionEntryOfVault = TransactionEntry.builder()
-                .amount(amountDto.amount())
-                .entryDirection(EntryDirection.DEBIT)
-                .account(vaultAccount)
-                .transactionHeader(savedTransactionHeader)
-                .description(TransactionDescriptionUtil.systemVaultWithdrawal(userAccount))
-                .createdAt(createdAt)
-                .build();
-        transactionEntryRepository.save(transactionEntryOfVault);
+        TransactionHeader savedTransactionHeader = createDoubleEntryTransaction(
+                TransactionType.DEPOSIT,
+                amountDto.amount(),
+                vaultAccount,
+                TransactionDescriptionUtil.systemVaultWithdrawal(userAccount),
+                userAccount,
+                TransactionDescriptionUtil.cashDeposit());
 
         log.info("Deposit completed. Account Number: {}. Amount: {}",
                 accountNumber,
@@ -98,12 +78,11 @@ public class TransactionService implements TransactionServiceImpl {
                 .transactionType(TransactionType.DEPOSIT)
                 .entryDirection(EntryDirection.CREDIT)
                 .amount(amountDto.amount())
-                .createdAt(createdAt)
+                .createdAt(savedTransactionHeader.getCreatedAt())
                 .build();
     }
 
     @Transactional
-    @Override
     public TransactionDto withdraw(String accountNumber, AmountDto amountDto) {
 
         log.info("Withdrawal initiated. Account Number: {}. Amount: {}",
@@ -127,33 +106,14 @@ public class TransactionService implements TransactionServiceImpl {
                     + " from balance: " + balance);
         }
 
-        Instant createdAt = Instant.now();
+        TransactionHeader savedTransactionHeader = createDoubleEntryTransaction(
+                TransactionType.WITHDRAWAL,
+                amountDto.amount(),
+                userAccount,
+                TransactionDescriptionUtil.cashWithdrawal(),
+                vaultAccount,
+                TransactionDescriptionUtil.systemVaultDeposit(userAccount));
 
-        TransactionHeader transactionHeader = TransactionHeader.builder()
-                .transactionType(TransactionType.WITHDRAWAL)
-                .createdAt(createdAt)
-                .build();
-        TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
-
-        TransactionEntry transactionEntryOfUser = TransactionEntry.builder()
-                .amount(amountDto.amount())
-                .entryDirection(EntryDirection.DEBIT)
-                .account(userAccount)
-                .transactionHeader(savedTransactionHeader)
-                .description(TransactionDescriptionUtil.cashWithdrawal())
-                .createdAt(createdAt)
-                .build();
-        transactionEntryRepository.save(transactionEntryOfUser);
-
-        TransactionEntry transactionEntryOfVault = TransactionEntry.builder()
-                .amount(amountDto.amount())
-                .entryDirection(EntryDirection.CREDIT)
-                .account(vaultAccount)
-                .transactionHeader(savedTransactionHeader)
-                .description(TransactionDescriptionUtil.systemVaultDeposit(userAccount))
-                .createdAt(createdAt)
-                .build();
-        transactionEntryRepository.save(transactionEntryOfVault);
 
         log.info("Withdrawal completed. Account Number: {}. Amount: {}",
                 accountNumber,
@@ -162,13 +122,12 @@ public class TransactionService implements TransactionServiceImpl {
                 .transactionType(TransactionType.WITHDRAWAL)
                 .entryDirection(EntryDirection.DEBIT)
                 .amount(amountDto.amount())
-                .createdAt(createdAt)
+                .createdAt(savedTransactionHeader.getCreatedAt())
                 .build();
 
     }
 
     @Transactional
-    @Override
     public TransferTransactionDto transfer(String fromAccountNumber, TransferRequestDto transferRequestDto) {
 
         log.info("Transfer initiated. From Account Number: {}. To Account Number: {}. Amount: {}",
@@ -211,34 +170,13 @@ public class TransactionService implements TransactionServiceImpl {
                                             " Balance: " + fromAccountBalance);
         }
 
-        Instant createdAt = Instant.now();
-
-
-        TransactionHeader transactionHeader = TransactionHeader.builder()
-                .transactionType(TransactionType.TRANSFER)
-                .createdAt(createdAt)
-                .build();
-        TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
-
-        TransactionEntry transactionEntryOfFromAccount = TransactionEntry.builder()
-                .amount(amountDto.amount())
-                .entryDirection(EntryDirection.DEBIT)
-                .account(fromAccount)
-                .transactionHeader(savedTransactionHeader)
-                .description(TransactionDescriptionUtil.transferTo(toAccount))
-                .createdAt(createdAt)
-                .build();
-        transactionEntryRepository.save(transactionEntryOfFromAccount);
-
-        TransactionEntry transactionEntryOfToAccount = TransactionEntry.builder()
-                .amount(amountDto.amount())
-                .entryDirection(EntryDirection.CREDIT)
-                .account(toAccount)
-                .transactionHeader(savedTransactionHeader)
-                .description(TransactionDescriptionUtil.transferFrom(fromAccount))
-                .createdAt(createdAt)
-                .build();
-        transactionEntryRepository.save(transactionEntryOfToAccount);
+        TransactionHeader savedTransactionHeader = createDoubleEntryTransaction(
+                TransactionType.TRANSFER,
+                amountDto.amount(),
+                fromAccount,
+                TransactionDescriptionUtil.transferTo(toAccount),
+                toAccount,
+                TransactionDescriptionUtil.transferFrom(fromAccount));
 
         log.info("Transfer completed successfully. Header {}. Sender: {}.Receiver: {}.Amount: {}",
                 savedTransactionHeader.getId(),
@@ -253,18 +191,64 @@ public class TransactionService implements TransactionServiceImpl {
                 .toAccountNumber(toAccountNumber)
                 .toAccountHolderName(toAccount.getAccountHolderName())
                 .amount(amountDto.amount())
-                .createdAt(createdAt)
+                .createdAt(savedTransactionHeader.getCreatedAt())
                 .build();
     }
 
-    @Transactional
-    @Override
+    @Transactional(readOnly = true)
     public BigDecimal getAccountBalance(Long accountId) {
         return transactionEntryRepository.calculateBalanceByAccountId(accountId);
     }
 
     @Transactional(readOnly = true)
-    @Override
+    public List<AccountBalanceProjection> getAccountBalances(List<Long> accountIds) {
+        return transactionEntryRepository.calculateBalancesForAccounts(accountIds);
+    }
+
+    @Transactional
+    public TransactionHeader createDoubleEntryTransaction(
+            TransactionType transactionType,
+            BigDecimal amount,
+            Account debitAccount,
+            String debitDescription,
+            Account creditAccount,
+            String creditDescription
+    ) {
+        Instant createdAt = Instant.now();
+
+        TransactionHeader transactionHeader = TransactionHeader.builder()
+                .transactionType(transactionType)
+                .createdAt(createdAt)
+                .build();
+
+        TransactionHeader savedHeader =
+                transactionHeaderRepository.save(transactionHeader);
+
+        TransactionEntry debitEntry = TransactionEntry.builder()
+                .amount(amount)
+                .entryDirection(EntryDirection.DEBIT)
+                .account(debitAccount)
+                .transactionHeader(savedHeader)
+                .description(debitDescription)
+                .createdAt(createdAt)
+                .build();
+
+        TransactionEntry creditEntry = TransactionEntry.builder()
+                .amount(amount)
+                .entryDirection(EntryDirection.CREDIT)
+                .account(creditAccount)
+                .transactionHeader(savedHeader)
+                .description(creditDescription)
+                .createdAt(createdAt)
+                .build();
+
+        transactionEntryRepository.save(debitEntry);
+        transactionEntryRepository.save(creditEntry);
+
+        return savedHeader;
+    }
+
+    @Transactional(readOnly = true)
     public Page<TransactionHistoryDto> getTransactionHistory(
             String accountNumber,
             Instant startDate,

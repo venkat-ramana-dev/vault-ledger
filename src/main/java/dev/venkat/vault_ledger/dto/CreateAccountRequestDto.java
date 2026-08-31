@@ -1,8 +1,6 @@
 package dev.venkat.vault_ledger.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.PositiveOrZero;
-import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.*;
 import lombok.Builder;
 
 import java.math.BigDecimal;
@@ -15,5 +13,7 @@ public record CreateAccountRequestDto(
         String accountHolderName,
 
 
+        @NotNull(message = "Initial deposit is required")
         @PositiveOrZero(message = "Initial deposit cannot be negative.")
+        @Digits(integer = 15, fraction = 4, message = "Initial deposit must have at most 15 integer digits and 4 decimal places")
         BigDecimal initialDeposit) { }

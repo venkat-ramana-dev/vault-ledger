@@ -11,11 +11,9 @@ import java.math.BigDecimal;
 @Builder
 public record TransferRequestDto(
 
-        @PathVariable
         @NotBlank(message = "AccountNumber cannot be blank.")
         String toAccountNumber,
 
-        @PathVariable
         @NotNull(message = "Amount cannot be null.")
         @Positive(message = "Amount must be greater than zero.")
         BigDecimal amount) { }

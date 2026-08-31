@@ -9,14 +9,14 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/transaction")
+@RequestMapping("/accounts")
 @RequiredArgsConstructor
 @Validated
 public class TransactionController {
 
     private final TransactionService transactionService;
 
-    @PutMapping("/{accountNumber}/deposit")
+    @PostMapping("/{accountNumber}/deposit")
     public ResponseEntity<TransactionDto> deposit(@PathVariable String accountNumber,
                                                   @Valid @RequestBody AmountDto amount) {
 
@@ -24,16 +24,16 @@ public class TransactionController {
         return ResponseEntity.ok(transactionDto);
     }
 
-    @PutMapping("/{accountNumber}/withdraw")
+    @PostMapping("/{accountNumber}/withdraw")
     public ResponseEntity<TransactionDto> withdraw(@PathVariable String accountNumber,
                                                    @Valid @RequestBody AmountDto amount) {
         TransactionDto transactionDto = transactionService.withdraw(accountNumber, amount);
         return ResponseEntity.ok(transactionDto);
     }
 
-    @PutMapping("/{fromAccountNumber}/transfer")
+    @PostMapping("/{fromAccountNumber}/transfer")
     public ResponseEntity<TransferTransactionDto> transfer(@PathVariable String fromAccountNumber,
-                                                           @Valid @RequestBody TransferRequestDto transferRequestDto) throws InterruptedException {
+                                                           @Valid @RequestBody TransferRequestDto transferRequestDto)  {
         TransferTransactionDto transferTransactionDto = transactionService.transfer(fromAccountNumber, transferRequestDto);
         return ResponseEntity.ok(transferTransactionDto);
     }

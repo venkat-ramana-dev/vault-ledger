@@ -4,11 +4,8 @@ import dev.venkat.vault_ledger.bootstrap.VaultInitializer;
 import dev.venkat.vault_ledger.dto.AccountDto;
 import dev.venkat.vault_ledger.dto.CreateAccountRequestDto;
 import dev.venkat.vault_ledger.entity.Account;
-import dev.venkat.vault_ledger.entity.TransactionEntry;
-import dev.venkat.vault_ledger.entity.TransactionHeader;
 import dev.venkat.vault_ledger.entity.User;
 import dev.venkat.vault_ledger.enums.AccountStatus;
-import dev.venkat.vault_ledger.enums.EntryDirection;
 import dev.venkat.vault_ledger.enums.TransactionType;
 import dev.venkat.vault_ledger.exception.AccountClosedException;
 import dev.venkat.vault_ledger.exception.AccountClosureException;
@@ -16,9 +13,6 @@ import dev.venkat.vault_ledger.exception.AccountNotFoundException;
 import dev.venkat.vault_ledger.mapper.AccountMapper;
 import dev.venkat.vault_ledger.projection.AccountBalanceProjection;
 import dev.venkat.vault_ledger.repository.AccountRepository;
-import dev.venkat.vault_ledger.repository.TransactionEntryRepository;
-import dev.venkat.vault_ledger.repository.TransactionHeaderRepository;
-import dev.venkat.vault_ledger.service.impl.AccountServiceImpl;
 import dev.venkat.vault_ledger.util.TransactionDescriptionUtil;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,18 +26,13 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class AccountService implements AccountServiceImpl {
+public class AccountService {
 
     private final AccountRepository accountRepository;
-
-    private final TransactionHeaderRepository transactionHeaderRepository;
-
-    private final TransactionEntryRepository transactionEntryRepository;
 
     private final TransactionService transactionService;
 
     @Transactional
-    @Override
     public AccountDto createAccount(User user, CreateAccountRequestDto createAccountRequestDto) {
 
         log.info("Creating new account for {}",
@@ -72,42 +61,21 @@ public class AccountService implements AccountServiceImpl {
                     .orElseThrow(() -> new AccountNotFoundException("System error: Vault account not found. AccountNumber: " +
                             VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER));
 
-            Instant createdAt = Instant.now();
-
-            TransactionHeader transactionHeader = TransactionHeader.builder()
-                    .transactionType(TransactionType.INITIAL_DEPOSIT)
-                    .createdAt(createdAt)
-                    .build();
-
-            TransactionHeader savedTransactionHeader = transactionHeaderRepository.save(transactionHeader);
-
-            TransactionEntry userTransactionEntry = TransactionEntry.builder()
-                    .amount(createAccountRequestDto.initialDeposit())
-                    .entryDirection(EntryDirection.CREDIT)
-                    .account(savedAccount)
-                    .transactionHeader(savedTransactionHeader)
-                    .description(TransactionDescriptionUtil.initialDeposit())
-                    .createdAt(createdAt)
-                    .build();
-            transactionEntryRepository.save(userTransactionEntry);
-
-            TransactionEntry vaultTransactionEntry = TransactionEntry.builder()
-                    .amount(createAccountRequestDto.initialDeposit())
-                    .entryDirection(EntryDirection.DEBIT)
-                    .account(vault) // USING THE VAULT OBJECT
-                    .transactionHeader(savedTransactionHeader)
-                    .description(TransactionDescriptionUtil.systemVaultWithdrawal(savedAccount))
-                    .createdAt(createdAt)
-                    .build();
-            transactionEntryRepository.save(vaultTransactionEntry);
+            transactionService.createDoubleEntryTransaction(
+                    TransactionType.INITIAL_DEPOSIT,
+                    createAccountRequestDto.initialDeposit(),
+                    vault,
+                    TransactionDescriptionUtil.systemVaultWithdrawal(savedAccount),
+                    savedAccount,
+                    TransactionDescriptionUtil.initialDeposit()
+            );
         }
         BigDecimal startingBalance = createAccountRequestDto.initialDeposit();
         log.info("Initial deposit is processed.");
         return AccountMapper.mapToAccountDto(savedAccount, startingBalance);
     }
 
-    @Transactional
-    @Override
+    @Transactional(readOnly = true)
     public AccountDto getAccountDetails(String accountNumber) {
         Account account = accountRepository.findByAccountNumber(accountNumber)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
@@ -115,8 +83,7 @@ public class AccountService implements AccountServiceImpl {
         return AccountMapper.mapToAccountDto(account, currentBalance);
     }
 
-    @Transactional
-    @Override
+    @Transactional(readOnly = true)
     public AccountDto getAccountDetails(User user) {
         Account account = accountRepository.findByUser(user)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found for username: " + user.getUsername()));
@@ -125,7 +92,6 @@ public class AccountService implements AccountServiceImpl {
     }
 
     @Transactional(readOnly = true)
-    @Override
     public List<AccountDto> getAllAccounts() {
 
         List<Account> accounts = accountRepository.findAll();
@@ -139,7 +105,7 @@ public class AccountService implements AccountServiceImpl {
             accountIds.add(account.getId());
         }
 
-        List<AccountBalanceProjection> balances = transactionEntryRepository.calculateBalancesForAccounts(accountIds);
+        List<AccountBalanceProjection> balances = transactionService.getAccountBalances(accountIds);
 
         Map<Long, BigDecimal> balanceMap = new HashMap<>();
         for (AccountBalanceProjection b : balances) {
@@ -157,7 +123,6 @@ public class AccountService implements AccountServiceImpl {
     }
 
     @Transactional
-    @Override
     public String closeAccount(String accountNumber) {
         log.info("Closing account. {}",accountNumber);
         Account account = accountRepository.findByAccountNumberForUpdate(accountNumber)
@@ -176,7 +141,7 @@ public class AccountService implements AccountServiceImpl {
         account.setAccountStatus(AccountStatus.CLOSED);
         accountRepository.save(account);
         log.info("Account closed successfully. {}",accountNumber);
-        return "Account deleted successfully with Acc No : " + account.getAccountNumber();
+        return "Account closed successfully with Acc No : " + account.getAccountNumber();
     }
 
 

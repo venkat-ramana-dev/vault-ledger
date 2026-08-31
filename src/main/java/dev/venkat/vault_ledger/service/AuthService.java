@@ -4,7 +4,6 @@ import dev.venkat.vault_ledger.dto.*;
 import dev.venkat.vault_ledger.entity.User;
 import dev.venkat.vault_ledger.enums.UserRole;
 import dev.venkat.vault_ledger.exception.InvalidCredentialsException;
-import dev.venkat.vault_ledger.service.impl.AuthServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 @RequiredArgsConstructor
 @Transactional
-public class AuthService implements AuthServiceImpl {
+public class AuthService {
 
     private final UserService userService;
 
@@ -27,7 +26,6 @@ public class AuthService implements AuthServiceImpl {
     private final AuthenticationManager authenticationManager;
 
     @Transactional
-    @Override
     public AuthResponseDto register(AuthRequestDto request) {
 
         User savedUser = userService.createUser(request.username(), request.password());
@@ -53,7 +51,6 @@ public class AuthService implements AuthServiceImpl {
     }
 
     @Transactional
-    @Override
     public AuthResponseDto login(LoginRequestDto request) {
 
         Authentication authenticationResponse = authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(request.username(), request.password()));

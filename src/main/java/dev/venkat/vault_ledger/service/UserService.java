@@ -2,9 +2,7 @@ package dev.venkat.vault_ledger.service;
 
 import dev.venkat.vault_ledger.entity.User;
 import dev.venkat.vault_ledger.enums.UserRole;
-import dev.venkat.vault_ledger.exception.InvalidCredentialsException;
 import dev.venkat.vault_ledger.repository.UserRepository;
-import dev.venkat.vault_ledger.service.impl.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -18,14 +16,13 @@ import java.util.Optional;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class UserService implements UserServiceImpl {
+public class UserService {
 
     private final UserRepository userRepository;
 
     private final PasswordEncoder passwordEncoder;
 
     @Transactional
-    @Override
     public User createUser(String username, String password) {
         Optional<User> user = userRepository.findByUsername(username);
 
@@ -49,7 +46,6 @@ public class UserService implements UserServiceImpl {
     }
 
     @Transactional
-    @Override
     public User findByUsername(String username) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(()-> new UsernameNotFoundException("Username not found."));

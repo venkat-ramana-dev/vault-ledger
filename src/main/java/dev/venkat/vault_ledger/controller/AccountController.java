@@ -18,7 +18,7 @@ import java.time.Instant;
 import java.util.List;
 
 @RestController
-@RequestMapping("/account")
+@RequestMapping("/accounts")
 @RequiredArgsConstructor
 @Validated
 @SecurityRequirement(name = "bearerAuth")
@@ -34,7 +34,7 @@ public class AccountController {
         return ResponseEntity.ok(accountDto);
     }
 
-    @GetMapping("/accounts")
+    @GetMapping("/all")
     public ResponseEntity<List<AccountDto>> getAllAccounts() {
         List<AccountDto> accountDtos = accountService.getAllAccounts();
         return ResponseEntity.ok(accountDtos);

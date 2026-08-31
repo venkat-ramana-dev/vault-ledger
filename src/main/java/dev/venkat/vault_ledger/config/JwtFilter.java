@@ -2,6 +2,7 @@ package dev.venkat.vault_ledger.config;
 
 import dev.venkat.vault_ledger.service.JwtService;
 import dev.venkat.vault_ledger.service.MyUserDetailsService;
+import io.jsonwebtoken.JwtException;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,7 +34,23 @@ public class JwtFilter extends OncePerRequestFilter {
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
             token = authHeader.substring(7);
-            username = jwtService.extractUserName(token);
+            try {
+                username = jwtService.extractUserName(token);
+            } catch (JwtException | IllegalArgumentException ex) {
+
+                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                response.setContentType("application/json");
+
+                response.getWriter().write("""
+                        {
+                            "status": 401,
+                            "error": "INVALID_TOKEN",
+                            "message": "Invalid or expired JWT token"
+                        }
+                        """);
+
+                return;
+            }
         }
 
         if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
