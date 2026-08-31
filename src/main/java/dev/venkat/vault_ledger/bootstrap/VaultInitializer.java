@@ -7,6 +7,7 @@ import dev.venkat.vault_ledger.enums.UserRole;
 import dev.venkat.vault_ledger.repository.AccountRepository;
 import dev.venkat.vault_ledger.repository.UserRepository;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
@@ -26,6 +27,18 @@ public class VaultInitializer implements CommandLineRunner {
 
     public static final String SYSTEM_VAULT_ACCOUNT_NUMBER = "SYS-VAULT-0000";
 
+    @Value("${bootstrap.system-vault.username}")
+    private String systemVaultUsername;
+
+    @Value("${bootstrap.system-vault.password}")
+    private String systemVaultPassword;
+
+    @Value("${bootstrap.admin.username}")
+    private String adminUsername;
+
+    @Value("${bootstrap.admin.password}")
+    private String adminPassword;
+
     public VaultInitializer(AccountRepository accountRepository, UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.accountRepository = accountRepository;
         this.userRepository = userRepository;
@@ -42,9 +55,9 @@ public class VaultInitializer implements CommandLineRunner {
             Instant createdAt = Instant.now();
 
             User system = User.builder()
-                    .username("vault-system")
+                    .username(systemVaultUsername)
                     .userRole(UserRole.SYSTEM)
-                    .password(passwordEncoder.encode("systemVault123"))
+                    .password(passwordEncoder.encode(systemVaultPassword))
                     .createdAt(createdAt)
                     .build();
 
@@ -65,13 +78,13 @@ public class VaultInitializer implements CommandLineRunner {
             log.info("Vault Account verified.");
         }
 
-        Optional<User> user = userRepository.findByUsername("admin");
+        Optional<User> user = userRepository.findByUsername(adminUsername);
         if (user.isEmpty()) {
 
             User admin = User.builder()
-                    .username("admin")
+                    .username(adminUsername)
                     .userRole(UserRole.ADMIN)
-                    .password(passwordEncoder.encode("admin"))
+                    .password(passwordEncoder.encode(adminPassword))
                     .createdAt(Instant.now())
                     .build();
             userRepository.save(admin);
