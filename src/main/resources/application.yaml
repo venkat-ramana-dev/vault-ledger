@@ -3,14 +3,23 @@ spring:
     name: vault-ledger
 
   datasource:
-    url: jdbc:postgresql://localhost:5433/vault_ledger
-    username: postgres
-    password: postgres
+    url: jdbc:postgresql://localhost:5433/{POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
 
   jpa:
     hibernate:
       ddl-auto: validate
     show-sql: true
+
+bootstrap:
+  system-vault:
+    username: ${SYSTEM_VAULT_USERNAME}
+    password: ${SYSTEM_VAULT_PASSWORD}
+
+  admin:
+    username: ${ADMIN_USERNAME}
+    password: ${ADMIN_PASSWORD}
 
 jwt:
   secret: 9e7c2f5d8a1b4e6f9c3d7a8b5e1f4c6d9a2b7e5c8f1d3a6b9e4f7c2d5a8b1e6
@@ -26,4 +35,4 @@ logging:
     org.hibernate.orm.jdbc.bind: TRACE
 
 server:
-  port: 8081
+  port: 8080
