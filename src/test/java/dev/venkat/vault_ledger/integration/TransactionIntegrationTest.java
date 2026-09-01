@@ -286,4 +286,173 @@ class TransactionIntegrationTest {
                                 && entry.getEntryDirection()
                                 == EntryDirection.DEBIT);
     }
+
+    @Test
+    @DisplayName("Transfer should decrease sender balance and increase receiver balance")
+    void transfer_ShouldUpdateBothAccountBalances() throws Exception {
+
+        // Arrange - create sender
+        User senderUser = User.builder()
+                .username("senderuser01")
+                .password(passwordEncoder.encode("password123"))
+                .userRole(UserRole.USER)
+                .createdAt(Instant.now())
+                .build();
+
+        senderUser = userRepository.save(senderUser);
+
+        Account senderAccount = Account.builder()
+                .accountNumber("ACC-TRANSFER-001")
+                .accountHolderName("Sender User")
+                .accountStatus(AccountStatus.ACTIVE)
+                .createdAt(Instant.now())
+                .user(senderUser)
+                .build();
+
+        senderAccount = accountRepository.save(senderAccount);
+
+        // Arrange - create receiver
+        User receiverUser = User.builder()
+                .username("receiveruser01")
+                .password(passwordEncoder.encode("password123"))
+                .userRole(UserRole.USER)
+                .createdAt(Instant.now())
+                .build();
+
+        receiverUser = userRepository.save(receiverUser);
+
+        Account receiverAccount = Account.builder()
+                .accountNumber("ACC-TRANSFER-002")
+                .accountHolderName("Receiver User")
+                .accountStatus(AccountStatus.ACTIVE)
+                .createdAt(Instant.now())
+                .user(receiverUser)
+                .build();
+
+        receiverAccount = accountRepository.save(receiverAccount);
+
+        // Login as sender
+        String loginRequest = """
+            {
+                "username": "senderuser01",
+                "password": "password123"
+            }
+            """;
+
+        MvcResult loginResult = mockMvc.perform(
+                        post("/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(loginRequest)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode loginJson =
+                objectMapper.readTree(
+                        loginResult.getResponse().getContentAsString());
+
+        String token = loginJson.get("token").asText();
+
+        // Give sender an initial balance of 1000
+        String senderDeposit = """
+            {
+                "amount": 1000.00
+            }
+            """;
+
+        mockMvc.perform(
+                        post("/accounts/" + senderAccount.getAccountNumber() + "/deposit")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(senderDeposit)
+                )
+                .andExpect(status().isOk());
+
+        // Give receiver an initial balance of 500
+        // We use the same authenticated sender token because
+        // the current controller/service does not check account ownership.
+        String receiverDeposit = """
+            {
+                "amount": 500.00
+            }
+            """;
+
+        mockMvc.perform(
+                        post("/accounts/" + receiverAccount.getAccountNumber() + "/deposit")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(receiverDeposit)
+                )
+                .andExpect(status().isOk());
+
+        // Verify starting balances
+        BigDecimal senderStartingBalance =
+                transactionEntryRepository.calculateBalanceByAccountId(
+                        senderAccount.getId());
+
+        BigDecimal receiverStartingBalance =
+                transactionEntryRepository.calculateBalanceByAccountId(
+                        receiverAccount.getId());
+
+        assertThat(senderStartingBalance)
+                .isEqualByComparingTo("1000.00");
+
+        assertThat(receiverStartingBalance)
+                .isEqualByComparingTo("500.00");
+
+        // Execute transfer: sender → receiver, 300
+        String transferRequest = """
+            {
+                "toAccountNumber": "ACC-TRANSFER-002",
+                "amount": 300.00
+            }
+            """;
+
+        MvcResult transferResult = mockMvc.perform(
+                        post("/accounts/" + senderAccount.getAccountNumber() + "/transfer")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(transferRequest)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // Verify API response
+        JsonNode transferJson =
+                objectMapper.readTree(
+                        transferResult.getResponse().getContentAsString());
+
+        assertThat(transferJson.get("fromAccountNumber").asText())
+                .isEqualTo("ACC-TRANSFER-001");
+
+        assertThat(transferJson.get("toAccountNumber").asText())
+                .isEqualTo("ACC-TRANSFER-002");
+
+        assertThat(transferJson.get("fromAccountHolderName").asText())
+                .isEqualTo("Sender User");
+
+        assertThat(transferJson.get("toAccountHolderName").asText())
+                .isEqualTo("Receiver User");
+
+        assertThat(transferJson.get("transactionType").asText())
+                .isEqualTo("TRANSFER");
+
+        assertThat(transferJson.get("amount").decimalValue())
+                .isEqualByComparingTo("300.00");
+
+        // Verify actual balances in PostgreSQL
+        BigDecimal senderFinalBalance =
+                transactionEntryRepository.calculateBalanceByAccountId(
+                        senderAccount.getId());
+
+        BigDecimal receiverFinalBalance =
+                transactionEntryRepository.calculateBalanceByAccountId(
+                        receiverAccount.getId());
+
+        assertThat(senderFinalBalance)
+                .isEqualByComparingTo("700.00");
+
+        assertThat(receiverFinalBalance)
+                .isEqualByComparingTo("800.00");
+    }
 }
