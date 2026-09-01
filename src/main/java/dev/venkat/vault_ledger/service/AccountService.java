@@ -32,6 +32,10 @@ public class AccountService {
 
     private final TransactionService transactionService;
 
+    private final SecurityService securityService;
+
+    private final AccountAuthorizationService accountAuthorizationService;
+
     @Transactional
     public AccountDto createAccount(User user, CreateAccountRequestDto createAccountRequestDto) {
 
@@ -77,8 +81,7 @@ public class AccountService {
 
     @Transactional(readOnly = true)
     public AccountDto getAccountDetails(String accountNumber) {
-        Account account = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
+        Account account = accountAuthorizationService.getOwnedAccount(accountNumber);
         BigDecimal currentBalance = transactionService.getAccountBalance(account.getId());
         return AccountMapper.mapToAccountDto(account, currentBalance);
     }
@@ -125,7 +128,9 @@ public class AccountService {
     @Transactional
     public String closeAccount(String accountNumber) {
         log.info("Closing account. {}",accountNumber);
-        Account account = accountRepository.findByAccountNumberForUpdate(accountNumber)
+        String username = securityService.getCurrentUsername();
+
+        Account account = accountRepository.findOwnedAccountForUpdate(accountNumber, username)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
 
         if (account.getAccountStatus() == AccountStatus.CLOSED) {
