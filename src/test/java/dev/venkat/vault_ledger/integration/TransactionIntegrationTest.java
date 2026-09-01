@@ -165,4 +165,125 @@ class TransactionIntegrationTest {
                                 && entry.getEntryDirection()
                                 == EntryDirection.CREDIT);
     }
+
+    @Test
+    @DisplayName("Withdraw should decrease account balance")
+    void withdraw_ShouldDecreaseAccountBalance() throws Exception {
+
+        // Arrange - create test user
+        User user = User.builder()
+                .username("withdrawuser01")
+                .password(passwordEncoder.encode("password123"))
+                .userRole(UserRole.USER)
+                .createdAt(Instant.now())
+                .build();
+
+        user = userRepository.save(user);
+
+        // Arrange - create account
+        Account account = Account.builder()
+                .accountNumber("ACC-WITHDRAW-001")
+                .accountHolderName("Withdraw User")
+                .accountStatus(AccountStatus.ACTIVE)
+                .createdAt(Instant.now())
+                .user(user)
+                .build();
+
+        account = accountRepository.save(account);
+
+        Long accountId = account.getId();
+
+        // Give the account an initial balance of 1000
+        // through the real deposit API.
+        String loginRequest = """
+            {
+                "username": "withdrawuser01",
+                "password": "password123"
+            }
+            """;
+
+        MvcResult loginResult = mockMvc.perform(
+                        post("/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(loginRequest)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode loginJson =
+                objectMapper.readTree(
+                        loginResult.getResponse().getContentAsString());
+
+        String token = loginJson.get("token").asText();
+
+        // Create balance of 1000 through the real deposit endpoint
+        String depositRequest = """
+            {
+                "amount": 1000.00
+            }
+            """;
+
+        mockMvc.perform(
+                        post("/accounts/" + account.getAccountNumber() + "/deposit")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(depositRequest)
+                )
+                .andExpect(status().isOk());
+
+        // Verify starting balance
+        BigDecimal startingBalance =
+                transactionEntryRepository.calculateBalanceByAccountId(
+                        account.getId());
+
+        assertThat(startingBalance)
+                .isEqualByComparingTo("1000.00");
+
+        // Execute withdrawal
+        String withdrawRequest = """
+            {
+                "amount": 400.00
+            }
+            """;
+
+        MvcResult withdrawResult = mockMvc.perform(
+                        post("/accounts/" + account.getAccountNumber() + "/withdraw")
+                                .header("Authorization", "Bearer " + token)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(withdrawRequest)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        // Verify API response
+        JsonNode withdrawJson =
+                objectMapper.readTree(
+                        withdrawResult.getResponse().getContentAsString());
+
+        assertThat(withdrawJson.get("transactionType").asText())
+                .isEqualTo("WITHDRAWAL");
+
+        assertThat(withdrawJson.get("entryDirection").asText())
+                .isEqualTo("DEBIT");
+
+        assertThat(withdrawJson.get("amount").decimalValue())
+                .isEqualByComparingTo("400.00");
+
+        // Verify actual balance in PostgreSQL
+        BigDecimal finalBalance =
+                transactionEntryRepository.calculateBalanceByAccountId(
+                        account.getId());
+
+        assertThat(finalBalance)
+                .isEqualByComparingTo("600.00");
+
+        // Verify withdrawal debit entry was persisted
+        assertThat(transactionEntryRepository.findAll())
+                .anyMatch(entry ->
+                        entry.getAccount().getId().equals(accountId)
+                                && entry.getAmount()
+                                .compareTo(new BigDecimal("400.00")) == 0
+                                && entry.getEntryDirection()
+                                == EntryDirection.DEBIT);
+    }
 }
