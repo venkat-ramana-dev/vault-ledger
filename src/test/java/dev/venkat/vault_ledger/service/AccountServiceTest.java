@@ -41,6 +41,12 @@ class AccountServiceTest {
     @Mock
     private TransactionService transactionService;
 
+    @Mock
+    private AccountAuthorizationService accountAuthorizationService;
+
+    @Mock
+    private SecurityService securityService;
+
     @InjectMocks
     private AccountService accountService;
 
@@ -309,8 +315,8 @@ class AccountServiceTest {
             Account account = createAccount();
             BigDecimal balance = new BigDecimal("1500.00");
 
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.of(account));
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenReturn(account);
 
             when(transactionService.getAccountBalance(account.getId()))
                     .thenReturn(balance);
@@ -334,8 +340,8 @@ class AccountServiceTest {
             );
             assertEquals(balance, result.balance());
 
-            verify(accountRepository)
-                    .findByAccountNumber(accountNumber);
+            verify(accountAuthorizationService)
+                    .getOwnedAccount(accountNumber);
 
             verify(transactionService)
                     .getAccountBalance(account.getId());
@@ -345,8 +351,9 @@ class AccountServiceTest {
         void shouldThrowExceptionWhenAccountDoesNotExist() {
 
             // Arrange
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.empty());
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenThrow(new AccountNotFoundException(
+                            "Account not found: " + accountNumber));
 
             // Act
             AccountNotFoundException exception = assertThrows(
@@ -360,8 +367,8 @@ class AccountServiceTest {
                     exception.getMessage()
             );
 
-            verify(accountRepository)
-                    .findByAccountNumber(accountNumber);
+            verify(accountAuthorizationService)
+                    .getOwnedAccount(accountNumber);
 
             verify(transactionService, never())
                     .getAccountBalance(anyLong());
@@ -583,7 +590,12 @@ class AccountServiceTest {
         void shouldThrowExceptionWhenAccountDoesNotExist() {
 
             // Arrange
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
+            when(securityService.getCurrentUsername())
+                    .thenReturn(user.getUsername());
+
+            when(accountRepository.findOwnedAccountForUpdate(
+                    accountNumber,
+                    user.getUsername()))
                     .thenReturn(Optional.empty());
 
             // Act
@@ -598,8 +610,13 @@ class AccountServiceTest {
                     exception.getMessage()
             );
 
+            verify(securityService)
+                    .getCurrentUsername();
+
             verify(accountRepository)
-                    .findByAccountNumberForUpdate(accountNumber);
+                    .findOwnedAccountForUpdate(
+                            accountNumber,
+                            user.getUsername());
 
             verify(transactionService, never())
                     .getAccountBalance(anyLong());
@@ -615,9 +632,13 @@ class AccountServiceTest {
             Account account = createAccount();
             account.setAccountStatus(AccountStatus.CLOSED);
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
-                    .thenReturn(Optional.of(account));
+            when(securityService.getCurrentUsername())
+                    .thenReturn(user.getUsername());
 
+            when(accountRepository.findOwnedAccountForUpdate(
+                    accountNumber,
+                    user.getUsername()))
+                    .thenReturn(Optional.of(account));
             // Act
             AccountClosedException exception = assertThrows(
                     AccountClosedException.class,
@@ -629,6 +650,14 @@ class AccountServiceTest {
                     "Account is already closed: " + accountNumber,
                     exception.getMessage()
             );
+
+            verify(securityService)
+                    .getCurrentUsername();
+
+            verify(accountRepository)
+                    .findOwnedAccountForUpdate(
+                            accountNumber,
+                            user.getUsername());
 
             verify(transactionService, never())
                     .getAccountBalance(anyLong());
@@ -644,7 +673,12 @@ class AccountServiceTest {
             Account account = createAccount();
             BigDecimal balance = new BigDecimal("500.00");
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
+            when(securityService.getCurrentUsername())
+                    .thenReturn(user.getUsername());
+
+            when(accountRepository.findOwnedAccountForUpdate(
+                    accountNumber,
+                    user.getUsername()))
                     .thenReturn(Optional.of(account));
 
             when(transactionService.getAccountBalance(account.getId()))
@@ -662,6 +696,14 @@ class AccountServiceTest {
                             + balance,
                     exception.getMessage()
             );
+
+            verify(securityService)
+                    .getCurrentUsername();
+
+            verify(accountRepository)
+                    .findOwnedAccountForUpdate(
+                            accountNumber,
+                            user.getUsername());
 
             verify(transactionService)
                     .getAccountBalance(account.getId());
@@ -681,7 +723,12 @@ class AccountServiceTest {
             // Arrange
             Account account = createAccount();
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
+            when(securityService.getCurrentUsername())
+                    .thenReturn(user.getUsername());
+
+            when(accountRepository.findOwnedAccountForUpdate(
+                    accountNumber,
+                    user.getUsername()))
                     .thenReturn(Optional.of(account));
 
             when(transactionService.getAccountBalance(account.getId()))
@@ -696,6 +743,14 @@ class AccountServiceTest {
                     AccountStatus.CLOSED,
                     account.getAccountStatus()
             );
+
+            verify(securityService)
+                    .getCurrentUsername();
+
+            verify(accountRepository)
+                    .findOwnedAccountForUpdate(
+                            accountNumber,
+                            user.getUsername());
 
             verify(transactionService)
                     .getAccountBalance(account.getId());
