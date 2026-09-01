@@ -1,0 +1,24 @@
+spring:
+  datasource:
+  # @ServiceConnection supplies them from Testcontainers.
+
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+
+bootstrap:
+  system-vault:
+    username: test-system-vault
+    password: test-system-password
+
+  admin:
+    username: test-admin
+    password: test-admin-password
+
+jwt:
+  secret: o0tlahpspUI0WbmEUNMDG4TJgRiNwTG1athXLpNmSy4=
+  expiration: 3600000
