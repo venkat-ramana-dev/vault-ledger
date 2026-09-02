@@ -41,6 +41,8 @@ public class TransactionService {
 
     private final TransactionEntryRepository transactionEntryRepository;
 
+    private final AccountAuthorizationService accountAuthorizationService;
+
     private static final Set<String> ALLOWED_SORT_FIELDS = Set.of(
             "amount",
             "createdAt"
@@ -53,8 +55,7 @@ public class TransactionService {
                 accountNumber,
                 amountDto.amount());
 
-        Account userAccount = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
+        Account userAccount = accountAuthorizationService.getOwnedAccount(accountNumber);
 
         Account vaultAccount = accountRepository.findByAccountNumber(VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found: " + VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER));
@@ -89,8 +90,7 @@ public class TransactionService {
                 accountNumber,
                 amountDto.amount());
 
-        Account userAccount = accountRepository.findByAccountNumberForUpdate(accountNumber)
-                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
+        Account userAccount = accountAuthorizationService.getOwnedAccountForUpdate(accountNumber);
 
         Account vaultAccount = accountRepository.findByAccountNumber(VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found: " + VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER));
@@ -145,15 +145,13 @@ public class TransactionService {
         Account toAccount;
 
         if (fromAccountNumber.compareTo(toAccountNumber) < 0) {
-            fromAccount = accountRepository.findByAccountNumberForUpdate(fromAccountNumber)
-                    .orElseThrow(() -> new AccountNotFoundException("Account not found: " + fromAccountNumber));
+            fromAccount = accountAuthorizationService.getOwnedAccountForUpdate(fromAccountNumber);
             toAccount = accountRepository.findByAccountNumberForUpdate(toAccountNumber)
                     .orElseThrow(() -> new AccountNotFoundException("Account not found: " + toAccountNumber));
         } else {
             toAccount = accountRepository.findByAccountNumberForUpdate(toAccountNumber)
                     .orElseThrow(() -> new AccountNotFoundException("Account not found: " + toAccountNumber));
-            fromAccount = accountRepository.findByAccountNumberForUpdate(fromAccountNumber)
-                    .orElseThrow(() -> new AccountNotFoundException("Account not found: " + fromAccountNumber));
+            fromAccount = accountAuthorizationService.getOwnedAccountForUpdate(fromAccountNumber);
         }
 
         if (fromAccount.getAccountStatus() == AccountStatus.CLOSED) {
@@ -260,8 +258,7 @@ public class TransactionService {
             int size,
             String sortBy,
             String sortDir) {
-        Account userAccount = accountRepository.findByAccountNumber(accountNumber)
-                .orElseThrow(() -> new AccountNotFoundException("Account not found: " + accountNumber));
+        Account userAccount = accountAuthorizationService.getOwnedAccount(accountNumber);
 
         if (!ALLOWED_SORT_FIELDS.contains(sortBy)) {
             throw new IllegalArgumentException(

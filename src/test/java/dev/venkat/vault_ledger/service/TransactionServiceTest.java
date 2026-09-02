@@ -57,6 +57,9 @@ class TransactionServiceTest {
     @Mock
     private TransactionEntryRepository transactionEntryRepository;
 
+    @Mock
+    private AccountAuthorizationService accountAuthorizationService;
+
     @InjectMocks
     private TransactionService transactionService;
 
@@ -120,8 +123,8 @@ class TransactionServiceTest {
                     .createdAt(Instant.now())
                     .build();
 
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenReturn(userAccount);
 
             when(accountRepository.findByAccountNumber(
                     VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER))
@@ -159,8 +162,8 @@ class TransactionServiceTest {
                     result.createdAt()
             );
 
-            verify(accountRepository)
-                    .findByAccountNumber(accountNumber);
+            verify(accountAuthorizationService)
+                    .getOwnedAccount(accountNumber);
 
             verify(accountRepository)
                     .findByAccountNumber(
@@ -186,8 +189,9 @@ class TransactionServiceTest {
                     new BigDecimal("1000.00")
             );
 
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.empty());
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenThrow(new AccountNotFoundException(
+                            "Account not found: " + accountNumber));
 
             TransactionService serviceSpy = spy(transactionService);
 
@@ -203,8 +207,8 @@ class TransactionServiceTest {
                     exception.getMessage()
             );
 
-            verify(accountRepository)
-                    .findByAccountNumber(accountNumber);
+            verify(accountAuthorizationService)
+                    .getOwnedAccount(accountNumber);
 
             // Critical: Processing must stop when the user's
             // account cannot be found.
@@ -235,8 +239,8 @@ class TransactionServiceTest {
                     new BigDecimal("1000.00")
             );
 
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenReturn(userAccount);
 
             when(accountRepository.findByAccountNumber(
                     VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER))
@@ -289,8 +293,8 @@ class TransactionServiceTest {
                             .createdAt(Instant.now())
                             .build();
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
+                    .thenReturn(userAccount);
 
             when(accountRepository.findByAccountNumber(
                     VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER))
@@ -355,8 +359,9 @@ class TransactionServiceTest {
                     new BigDecimal("500.00")
             );
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
-                    .thenReturn(Optional.empty());
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
+                    .thenThrow(new AccountNotFoundException(
+                            "Account not found: " + accountNumber));
 
             TransactionService serviceSpy = spy(transactionService);
 
@@ -397,8 +402,8 @@ class TransactionServiceTest {
                     new BigDecimal("500.00")
             );
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
+                    .thenReturn(userAccount);
 
             when(accountRepository.findByAccountNumber(
                     VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER))
@@ -445,8 +450,8 @@ class TransactionServiceTest {
 
             BigDecimal balance = new BigDecimal("500.00");
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
+                    .thenReturn(userAccount);
 
             when(accountRepository.findByAccountNumber(
                     VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER))
@@ -510,8 +515,8 @@ class TransactionServiceTest {
                             .createdAt(Instant.now())
                             .build();
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
+                    .thenReturn(userAccount);
 
             when(accountRepository.findByAccountNumberForUpdate(toAccountNumber))
                     .thenReturn(Optional.of(toAccount));
@@ -614,6 +619,9 @@ class TransactionServiceTest {
             verify(transactionEntryRepository, never())
                     .calculateBalanceByAccountId(anyLong());
 
+            verify(accountAuthorizationService, never())
+                    .getOwnedAccountForUpdate(anyString());
+
             verify(serviceSpy, never())
                     .createDoubleEntryTransaction(
                             any(),
@@ -635,8 +643,9 @@ class TransactionServiceTest {
                     .amount(new BigDecimal("500.00"))
                     .build();
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
-                    .thenReturn(Optional.empty());
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
+                    .thenThrow(new AccountNotFoundException(
+                            "Account not found: " + accountNumber));
 
             TransactionService serviceSpy = spy(transactionService);
 
@@ -652,8 +661,8 @@ class TransactionServiceTest {
                     exception.getMessage()
             );
 
-            verify(accountRepository)
-                    .findByAccountNumberForUpdate(accountNumber);
+            verify(accountAuthorizationService)
+                    .getOwnedAccountForUpdate(accountNumber);
 
             verify(transactionEntryRepository, never())
                     .calculateBalanceByAccountId(anyLong());
@@ -679,8 +688,8 @@ class TransactionServiceTest {
                     .amount(new BigDecimal("500.00"))
                     .build();
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
+                    .thenReturn(userAccount);
 
             when(accountRepository.findByAccountNumberForUpdate(toAccountNumber))
                     .thenReturn(Optional.empty());
@@ -725,8 +734,8 @@ class TransactionServiceTest {
                     .amount(new BigDecimal("500.00"))
                     .build();
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
+                    .thenReturn(userAccount);
 
             when(accountRepository.findByAccountNumberForUpdate(toAccountNumber))
                     .thenReturn(Optional.of(toAccount));
@@ -771,8 +780,8 @@ class TransactionServiceTest {
                     .amount(new BigDecimal("500.00"))
                     .build();
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
+                    .thenReturn(userAccount);
 
             when(accountRepository.findByAccountNumberForUpdate(toAccountNumber))
                     .thenReturn(Optional.of(toAccount));
@@ -817,8 +826,8 @@ class TransactionServiceTest {
 
             BigDecimal balance = new BigDecimal("500.00");
 
-            when(accountRepository.findByAccountNumberForUpdate(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
+                    .thenReturn(userAccount);
 
             when(accountRepository.findByAccountNumberForUpdate(toAccountNumber))
                     .thenReturn(Optional.of(toAccount));
@@ -890,8 +899,8 @@ class TransactionServiceTest {
             when(accountRepository.findByAccountNumberForUpdate(smallerAccountNumber))
                     .thenReturn(Optional.of(receiverAccount));
 
-            when(accountRepository.findByAccountNumberForUpdate(greaterAccountNumber))
-                    .thenReturn(Optional.of(fromAccount));
+            when(accountAuthorizationService.getOwnedAccountForUpdate(greaterAccountNumber))
+                    .thenReturn(fromAccount);
 
             when(transactionEntryRepository.calculateBalanceByAccountId(
                     fromAccount.getId()))
@@ -921,15 +930,16 @@ class TransactionServiceTest {
             serviceSpy.transfer(greaterAccountNumber, request);
 
             // Assert
-            var inOrder = inOrder(accountRepository);
+            var inOrder = inOrder(
+                    accountRepository,
+                    accountAuthorizationService
+            );
 
-            // Critical: When the sender's account number is greater,
-            // the smaller account must still be locked first.
             inOrder.verify(accountRepository)
                     .findByAccountNumberForUpdate(smallerAccountNumber);
 
-            inOrder.verify(accountRepository)
-                    .findByAccountNumberForUpdate(greaterAccountNumber);
+            inOrder.verify(accountAuthorizationService)
+                    .getOwnedAccountForUpdate(greaterAccountNumber);
         }
     }
 
@@ -1106,8 +1116,8 @@ class TransactionServiceTest {
             Page<TransactionEntry> entries =
                     new PageImpl<>(List.of(entry));
 
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenReturn(userAccount);
 
             when(transactionEntryRepository.findAll(
                     any(Specification.class),
@@ -1151,8 +1161,8 @@ class TransactionServiceTest {
                     dto.description()
             );
 
-            verify(accountRepository)
-                    .findByAccountNumber(accountNumber);
+            verify(accountAuthorizationService)
+                    .getOwnedAccount(accountNumber);
 
             verify(transactionEntryRepository)
                     .findAll(
@@ -1175,8 +1185,9 @@ class TransactionServiceTest {
         void shouldThrowExceptionWhenAccountDoesNotExist() {
 
             // Arrange
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.empty());
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenThrow(new AccountNotFoundException(
+                            "Account not found: " + accountNumber));
 
             // Act
             AccountNotFoundException exception = assertThrows(
@@ -1213,8 +1224,8 @@ class TransactionServiceTest {
         void shouldThrowExceptionWhenSortFieldIsInvalid() {
 
             // Arrange
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenReturn(userAccount);
 
             // Act
             IllegalArgumentException exception = assertThrows(
@@ -1251,8 +1262,8 @@ class TransactionServiceTest {
         void shouldThrowExceptionWhenSortDirectionIsInvalid() {
 
             // Arrange
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenReturn(userAccount);
 
             // Act
             IllegalArgumentException exception = assertThrows(
@@ -1289,8 +1300,8 @@ class TransactionServiceTest {
         void shouldThrowExceptionWhenPageIsNegative() {
 
             // Arrange
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenReturn(userAccount);
 
             // Act
             InvalidPageRangeException exception = assertThrows(
@@ -1327,8 +1338,8 @@ class TransactionServiceTest {
         void shouldThrowExceptionWhenSizeIsZero() {
 
             // Arrange
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenReturn(userAccount);
 
             // Act
             InvalidSizeRangeException exception = assertThrows(
@@ -1365,8 +1376,8 @@ class TransactionServiceTest {
         void shouldThrowExceptionWhenSizeExceedsMaximum() {
 
             // Arrange
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenReturn(userAccount);
 
             // Act
             InvalidSizeRangeException exception = assertThrows(
@@ -1403,8 +1414,8 @@ class TransactionServiceTest {
         void shouldThrowExceptionWhenMinimumAmountIsGreaterThanMaximumAmount() {
 
             // Arrange
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenReturn(userAccount);
 
             // Act
             InvalidAmountRangeException exception = assertThrows(
@@ -1441,16 +1452,12 @@ class TransactionServiceTest {
         void shouldThrowExceptionWhenStartDateIsAfterEndDate() {
 
             // Arrange
-            Instant startDate = Instant.parse(
-                    "2026-08-31T12:00:00Z"
-            );
+            Instant endDate = Instant.now();
 
-            Instant endDate = Instant.parse(
-                    "2026-08-30T12:00:00Z"
-            );
+            Instant startDate = endDate.plusSeconds(86400);
 
-            when(accountRepository.findByAccountNumber(accountNumber))
-                    .thenReturn(Optional.of(userAccount));
+            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+                    .thenReturn(userAccount);
 
             // Act
             InvalidDateRangeException exception = assertThrows(

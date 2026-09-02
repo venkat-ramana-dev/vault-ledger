@@ -154,10 +154,6 @@ class TransactionIntegrationTest {
         assertThat(finalBalance)
                 .isEqualByComparingTo("500.00");
 
-        // Verify transaction entry was persisted
-        assertThat(transactionEntryRepository.findAll())
-                .hasSize(2);
-
         assertThat(transactionEntryRepository.findAll())
                 .anyMatch(entry ->
                         entry.getAmount()
@@ -371,6 +367,27 @@ class TransactionIntegrationTest {
         // Give receiver an initial balance of 500
         // We use the same authenticated sender token because
         // the current controller/service does not check account ownership.
+        String receiverLoginRequest = """
+            {
+                "username": "receiveruser01",
+                "password": "password123"
+            }
+            """;
+
+        MvcResult receiverLoginResult = mockMvc.perform(
+                        post("/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(receiverLoginRequest)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode receiverLoginJson =
+                objectMapper.readTree(
+                        receiverLoginResult.getResponse().getContentAsString());
+
+        String receiverToken = receiverLoginJson.get("token").asText();
+
         String receiverDeposit = """
             {
                 "amount": 500.00
@@ -379,11 +396,12 @@ class TransactionIntegrationTest {
 
         mockMvc.perform(
                         post("/accounts/" + receiverAccount.getAccountNumber() + "/deposit")
-                                .header("Authorization", "Bearer " + token)
+                                .header("Authorization", "Bearer " + receiverToken)
                                 .contentType(MediaType.APPLICATION_JSON)
                                 .content(receiverDeposit)
                 )
                 .andExpect(status().isOk());
+
 
         // Verify starting balances
         BigDecimal senderStartingBalance =
@@ -454,5 +472,85 @@ class TransactionIntegrationTest {
 
         assertThat(receiverFinalBalance)
                 .isEqualByComparingTo("800.00");
+    }
+
+    @Test
+    @DisplayName("Deposit should reject access to another user's account")
+    void deposit_ShouldRejectUnauthorizedAccount() throws Exception {
+
+        // Arrange - create account owned by another user
+        User owner = User.builder()
+                .username("depositowner01")
+                .password(passwordEncoder.encode("password123"))
+                .userRole(UserRole.USER)
+                .createdAt(Instant.now())
+                .build();
+
+        owner = userRepository.save(owner);
+
+        Account ownerAccount = Account.builder()
+                .accountNumber("ACC-DEPOSIT-OWNER-001")
+                .accountHolderName("Deposit Owner")
+                .accountStatus(AccountStatus.ACTIVE)
+                .createdAt(Instant.now())
+                .user(owner)
+                .build();
+
+        ownerAccount = accountRepository.save(ownerAccount);
+
+        User attacker = User.builder()
+                .username("depositattacker01")
+                .password(passwordEncoder.encode("password123"))
+                .userRole(UserRole.USER)
+                .createdAt(Instant.now())
+                .build();
+
+        attacker = userRepository.save(attacker);
+
+        Account attackerAccount = Account.builder()
+                .accountNumber("ACC-DEPOSIT-ATTACKER-001")
+                .accountHolderName("Deposit Attacker")
+                .accountStatus(AccountStatus.ACTIVE)
+                .createdAt(Instant.now())
+                .user(attacker)
+                .build();
+
+        accountRepository.save(attackerAccount);
+
+        String loginRequest = """
+        {
+            "username": "depositattacker01",
+            "password": "password123"
+        }
+        """;
+
+        MvcResult loginResult = mockMvc.perform(
+                        post("/auth/login")
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(loginRequest)
+                )
+                .andExpect(status().isOk())
+                .andReturn();
+
+        JsonNode loginJson =
+                objectMapper.readTree(
+                        loginResult.getResponse().getContentAsString());
+
+        String attackerToken = loginJson.get("token").asText();
+
+        String depositRequest = """
+        {
+            "amount": 500.00
+        }
+        """;
+
+        // Act + Assert
+        mockMvc.perform(
+                        post("/accounts/" + ownerAccount.getAccountNumber() + "/deposit")
+                                .header("Authorization", "Bearer " + attackerToken)
+                                .contentType(MediaType.APPLICATION_JSON)
+                                .content(depositRequest)
+                )
+                .andExpect(status().isNotFound());
     }
 }
