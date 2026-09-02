@@ -12,7 +12,7 @@
 	<artifactId>vault-ledger</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>vault-ledger</name>
-	<description>A transaction-safe banking ledger system implementing append-only transactions, optimistic locking, and idempotent APIs.</description>
+	<description>A transaction-safe banking ledger system implementing append-only transactions.</description>
 	<url/>
 	<licenses>
 		<license/>
