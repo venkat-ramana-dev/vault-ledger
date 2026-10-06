@@ -16,12 +16,4 @@ public class AccountMapper {
                 .build();
     }
 
-    public static Account mapToAccount (AccountDto accountDto) {
-        return Account.builder()
-                .accountNumber(accountDto.accountNumber())
-                .accountHolderName(accountDto.accountHolderName())
-                .accountStatus(accountDto.accountStatus())
-                .build();
-    }
-
 }

@@ -8,6 +8,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -25,6 +26,8 @@ public class JwtFilter extends OncePerRequestFilter {
 
     private final MyUserDetailsService myUserDetailsService;
 
+    private final JwtAuthenticationEntryPoint authenticationEntryPoint;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
@@ -38,16 +41,11 @@ public class JwtFilter extends OncePerRequestFilter {
                 username = jwtService.extractUserName(token);
             } catch (JwtException | IllegalArgumentException ex) {
 
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-
-                response.getWriter().write("""
-                        {
-                            "status": 401,
-                            "error": "INVALID_TOKEN",
-                            "message": "Invalid or expired JWT token"
-                        }
-                        """);
+                authenticationEntryPoint.commence(
+                        request,
+                        response,
+                        new BadCredentialsException("Invalid or expired token", ex)
+                );
 
                 return;
             }
@@ -63,15 +61,11 @@ public class JwtFilter extends OncePerRequestFilter {
             } else {
 
                 // Token is invalid or expired
-                response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                response.setContentType("application/json");
-                response.getWriter().write("""
-            {
-                "status": 401,
-                "error": "Unauthorized",
-                "message": "Invalid or expired token"
-            }
-            """);
+                authenticationEntryPoint.commence(
+                        request,
+                        response,
+                        new BadCredentialsException("Invalid or expired token")
+                );
                 return;
             }
         }
