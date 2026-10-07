@@ -55,7 +55,7 @@ public class TransactionService {
                 accountNumber,
                 amountDto.amount());
 
-        Account userAccount = accountAuthorizationService.getOwnedAccount(accountNumber);
+        Account userAccount = accountAuthorizationService.getOwnedAccountForUpdate(accountNumber);
 
         Account vaultAccount = accountRepository.findByAccountNumber(VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER)
                 .orElseThrow(() -> new AccountNotFoundException("Account not found: " + VaultInitializer.SYSTEM_VAULT_ACCOUNT_NUMBER));

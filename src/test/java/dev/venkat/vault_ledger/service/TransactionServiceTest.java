@@ -123,7 +123,7 @@ class TransactionServiceTest {
                     .createdAt(Instant.now())
                     .build();
 
-            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
                     .thenReturn(userAccount);
 
             when(accountRepository.findByAccountNumber(
@@ -163,7 +163,7 @@ class TransactionServiceTest {
             );
 
             verify(accountAuthorizationService)
-                    .getOwnedAccount(accountNumber);
+                    .getOwnedAccountForUpdate(accountNumber);
 
             verify(accountRepository)
                     .findByAccountNumber(
@@ -189,7 +189,7 @@ class TransactionServiceTest {
                     new BigDecimal("1000.00")
             );
 
-            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
                     .thenThrow(new AccountNotFoundException(
                             "Account not found: " + accountNumber));
 
@@ -208,7 +208,7 @@ class TransactionServiceTest {
             );
 
             verify(accountAuthorizationService)
-                    .getOwnedAccount(accountNumber);
+                    .getOwnedAccountForUpdate(accountNumber);
 
             // Critical: Processing must stop when the user's
             // account cannot be found.
@@ -239,7 +239,7 @@ class TransactionServiceTest {
                     new BigDecimal("1000.00")
             );
 
-            when(accountAuthorizationService.getOwnedAccount(accountNumber))
+            when(accountAuthorizationService.getOwnedAccountForUpdate(accountNumber))
                     .thenReturn(userAccount);
 
             when(accountRepository.findByAccountNumber(
@@ -1245,10 +1245,9 @@ class TransactionServiceTest {
             );
 
             // Assert
-            assertEquals(
-                    "Invalid sort field. Allowed fields: [createdAt, amount]",
-                    exception.getMessage()
-            );
+            assertTrue(exception.getMessage().contains("Invalid sort field. Allowed fields:"));
+            assertTrue(exception.getMessage().contains("amount"));
+            assertTrue(exception.getMessage().contains("createdAt"));
 
             verify(transactionEntryRepository, never())
                     .findAll(

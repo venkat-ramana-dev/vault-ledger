@@ -25,6 +25,8 @@ public class SecurityConfig {
 
     private final JwtFilter jwtFilter;
 
+    private final JwtAuthenticationEntryPoint jwtAuthenticationEntryPoint;
+
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
@@ -33,6 +35,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**","/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/accounts/all").hasAnyRole("ADMIN", "SYSTEM")
                         .anyRequest().authenticated())
+                .exceptionHandling(exception -> exception.authenticationEntryPoint(jwtAuthenticationEntryPoint))
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class)
                 .build();
